@@ -1,0 +1,78 @@
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # PostgreSQL
+  # ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: odonto-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odonto}
+      POSTGRES_USER: ${POSTGRES_USER:-odonto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odonto}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odonto} -d ${POSTGRES_DB:-odonto}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - odonto-net
+
+  # ──────────────────────────────────────────────────────────
+  # API Spring Boot
+  # ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odonto-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-odonto}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-odonto}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-odonto}
+      SPRING_LIQUIBASE_CHANGE_LOG: classpath:/db/changelog/db.changelog-master.xml
+      JWT_SECRET: ${JWT_SECRET:-changeme-use-a-strong-secret-in-production}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+    ports:
+      - "8080:8080"
+    networks:
+      - odonto-net
+
+  # ──────────────────────────────────────────────────────────
+  # PgAdmin (opcional – remova em produção)
+  # ──────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: odonto-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@odonto.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - odonto-net
+    profiles:
+      - tools   # sobe apenas com: docker compose --profile tools up
+
+# ──────────────────────────────────────────────────────────
+# Volumes & Networks
+# ──────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+
+networks:
+  odonto-net:
+    driver: bridge
