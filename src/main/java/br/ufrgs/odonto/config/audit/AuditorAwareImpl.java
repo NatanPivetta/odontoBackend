@@ -1,5 +1,6 @@
 package br.ufrgs.odonto.config.audit;
 
+import br.ufrgs.odonto.modules.core.entity.User;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +15,10 @@ public class AuditorAwareImpl implements AuditorAware<String> {
     public Optional<String> getCurrentAuditor() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof User user)) {
             return Optional.empty();
         }
 
-        return Optional.of(auth.getName());
+        return Optional.of(user.getEmail());
     }
 }

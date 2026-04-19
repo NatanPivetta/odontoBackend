@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class UserService {
         return userRepository.findAll(pageable).map(userMapper::toResponse);
     }
 
-    public UserResponseDTO findById(UUID id) {
+    public UserResponseDTO findById(Long id) {
         return userMapper.toResponse(findUserById(id));
     }
 
@@ -54,7 +53,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDTO update(UUID id, UpdateUserRequestDTO request) {
+    public UserResponseDTO update(Long id, UpdateUserRequestDTO request) {
         User user = findUserById(id);
 
         if (request.email() != null && !request.email().equals(user.getEmail())) {
@@ -77,13 +76,13 @@ public class UserService {
     }
 
     @Transactional
-    public void delete(UUID id) {
+    public void delete(Long id) {
         User user = findUserById(id);
         user.setActive(false);
         userRepository.save(user);
     }
 
-    private User findUserById(UUID id) {
+    private User findUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
     }

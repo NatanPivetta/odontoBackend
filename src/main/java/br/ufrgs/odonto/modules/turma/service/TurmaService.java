@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +26,13 @@ public class TurmaService {
     private final UserRepository userRepository;
     private final TurmaMapper turmaMapper;
 
+    @Transactional(readOnly = true)
     public Page<TurmaResponseDTO> findAll(Pageable pageable) {
         return turmaRepository.findAll(pageable).map(turmaMapper::toResponse);
     }
 
-    public TurmaResponseDTO findById(UUID id) {
+    @Transactional(readOnly = true)
+    public TurmaResponseDTO findById(Long id) {
         return turmaMapper.toResponse(findTurmaById(id));
     }
 
@@ -47,7 +48,7 @@ public class TurmaService {
     }
 
     @Transactional
-    public TurmaResponseDTO update(UUID id, UpdateTurmaRequestDTO request) {
+    public TurmaResponseDTO update(Long id, UpdateTurmaRequestDTO request) {
         Turma turma = findTurmaById(id);
 
         if (request.disciplina() != null) turma.setDisciplina(request.disciplina());
@@ -59,14 +60,14 @@ public class TurmaService {
     }
 
     @Transactional
-    public void delete(UUID id) {
+    public void delete(Long id) {
         Turma turma = findTurmaById(id);
         turma.setActive(false);
         turmaRepository.save(turma);
     }
 
     @Transactional
-    public TurmaResponseDTO addAluno(UUID turmaId, UUID alunoId) {
+    public TurmaResponseDTO addAluno(Long turmaId, Long alunoId) {
         Turma turma = findTurmaById(turmaId);
         User aluno = findAlunoById(alunoId);
 
@@ -79,7 +80,7 @@ public class TurmaService {
     }
 
     @Transactional
-    public void removeAluno(UUID turmaId, UUID alunoId) {
+    public void removeAluno(Long turmaId, Long alunoId) {
         Turma turma = findTurmaById(turmaId);
         User aluno = findAlunoById(alunoId);
 
@@ -90,12 +91,12 @@ public class TurmaService {
         turmaRepository.save(turma);
     }
 
-    private Turma findTurmaById(UUID id) {
+    private Turma findTurmaById(Long id) {
         return turmaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Turma não encontrada: " + id));
     }
 
-    private User findAlunoById(UUID id) {
+    private User findAlunoById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
 

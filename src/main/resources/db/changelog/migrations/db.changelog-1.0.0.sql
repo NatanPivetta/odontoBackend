@@ -2,17 +2,17 @@
 
 -- changeset natan.pivetta:20260410-1
 CREATE TABLE IF NOT EXISTS users (
-    id            UUID                     NOT NULL,
-    name          VARCHAR(150)             NOT NULL,
-    email         VARCHAR(150)             NOT NULL,
-    card_number   VARCHAR(9)               NOT NULL,
-    password_hash VARCHAR(255)             NOT NULL,
-    role          VARCHAR(20)              NOT NULL,
-    active        BOOLEAN                  NOT NULL DEFAULT TRUE,
-    created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_by       VARCHAR(9),
-    last_modified_by VARCHAR(9),
+    id               BIGINT       GENERATED ALWAYS AS IDENTITY NOT NULL,
+    name             VARCHAR(150)                              NOT NULL,
+    email            VARCHAR(150)                              NOT NULL,
+    card_number      VARCHAR(9)                                NOT NULL,
+    password_hash    VARCHAR(255)                              NOT NULL,
+    role             VARCHAR(20)                               NOT NULL,
+    active           BOOLEAN                                   NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMP                                 NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP                                 NOT NULL DEFAULT NOW(),
+    created_by       VARCHAR(150),
+    last_modified_by VARCHAR(150),
     CONSTRAINT pk_users             PRIMARY KEY (id),
     CONSTRAINT uq_users_email       UNIQUE (email),
     CONSTRAINT uq_users_card_number UNIQUE (card_number)
@@ -20,22 +20,22 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- changeset natan.pivetta:20260410-2
 CREATE TABLE IF NOT EXISTS turmas (
-    id               UUID                     NOT NULL,
-    disciplina       VARCHAR(20)              NOT NULL,
-    name             VARCHAR(100)             NOT NULL,
-    semester         VARCHAR(10)              NOT NULL,
-    active           BOOLEAN                  NOT NULL DEFAULT TRUE,
-    created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_by       VARCHAR(9),
-    last_modified_by VARCHAR(9),
+    id               BIGINT       GENERATED ALWAYS AS IDENTITY NOT NULL,
+    disciplina       VARCHAR(20)                               NOT NULL,
+    name             VARCHAR(100)                              NOT NULL,
+    semester         VARCHAR(10)                               NOT NULL,
+    active           BOOLEAN                                   NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMP                                 NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP                                 NOT NULL DEFAULT NOW(),
+    created_by       VARCHAR(150),
+    last_modified_by VARCHAR(150),
     CONSTRAINT pk_turmas PRIMARY KEY (id)
 );
 
 -- changeset natan.pivetta:20260410-3
 CREATE TABLE IF NOT EXISTS turma_alunos (
-    turma_id UUID NOT NULL,
-    aluno_id UUID NOT NULL,
+    turma_id BIGINT NOT NULL,
+    aluno_id BIGINT NOT NULL,
     CONSTRAINT pk_turma_alunos       PRIMARY KEY (turma_id, aluno_id),
     CONSTRAINT fk_turma_alunos_turma FOREIGN KEY (turma_id) REFERENCES turmas (id) ON DELETE CASCADE,
     CONSTRAINT fk_turma_alunos_aluno FOREIGN KEY (aluno_id) REFERENCES users  (id) ON DELETE CASCADE

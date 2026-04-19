@@ -10,7 +10,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
@@ -19,17 +19,17 @@ public class Auditable<U> {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
     @CreatedBy
-    @Column(name = "created_by", updatable = false, length = 9)
+    @Column(name = "created_by", updatable = false, length = 150)
     private U createdBy;
 
     @LastModifiedBy
-    @Column(name = "last_modified_by", length = 9)
+    @Column(name = "last_modified_by", length = 150)
     private U lastModifiedBy;
 }

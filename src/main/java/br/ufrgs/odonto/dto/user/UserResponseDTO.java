@@ -2,15 +2,14 @@ package br.ufrgs.odonto.dto.user;
 
 import br.ufrgs.odonto.enums.Role;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 public record UserResponseDTO(
-        UUID id,
+        Long id,
         String name,
         String email,
         String cardNumber,
         Role role,
         boolean active,
-        OffsetDateTime createdAt
+        LocalDateTime createdAt
 ) {}
