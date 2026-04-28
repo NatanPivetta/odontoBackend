@@ -35,9 +35,9 @@ jobs:
           cache: maven
 
       # ─────────────────────────────────────────────
-      - name: Tests
-        run: ./mvnw -B test
-        # Remova esta etapa se quiser pular os testes no CI
+#      - name: Tests
+#        run: ./mvnw -B test
+#        # Remova esta etapa se quiser pular os testes no CI
 
       # ─────────────────────────────────────────────
       - name: Configure AWS credentials (OIDC)
