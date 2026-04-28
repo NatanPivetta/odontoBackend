@@ -2,7 +2,7 @@ name: Deploy Backend
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 # OIDC: necessário para assumir a role na AWS sem chaves de longa duração
