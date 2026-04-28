@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.4dev.tags.cache.v4/
+
+odontoBackend.zip
