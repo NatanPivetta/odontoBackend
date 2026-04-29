@@ -5,6 +5,9 @@ spring:
   application:
     name: odonto
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
   # ── Banco de dados ────────────────────────────────────────
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/odonto}
