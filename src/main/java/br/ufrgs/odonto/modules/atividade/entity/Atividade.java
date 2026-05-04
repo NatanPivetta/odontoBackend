@@ -63,4 +63,8 @@ public class Atividade extends Auditable<String> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "atividade_pai_id")
     private Atividade atividadePai;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
 }
