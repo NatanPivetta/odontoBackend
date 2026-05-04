@@ -34,4 +34,8 @@ build/
 
 .4dev.tags.cache.v4/
 
+.claude/
+aws terraform deploy/
+docs/superpowers/plans/
+
 odontoBackend.zip
