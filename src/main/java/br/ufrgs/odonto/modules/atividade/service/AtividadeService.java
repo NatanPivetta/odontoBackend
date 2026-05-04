@@ -41,7 +41,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(dto.status())
+                .status(dto.status() != null ? dto.status() : StatusAtividade.PENDENTE)
                 .aluno(aluno)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)

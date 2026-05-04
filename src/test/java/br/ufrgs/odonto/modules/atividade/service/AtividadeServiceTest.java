@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,7 +83,11 @@ class AtividadeServiceTest {
         AtividadeResponseDTO result = atividadeService.create(dto);
 
         assertThat(result).isNotNull();
-        verify(atividadeRepository).save(any(Atividade.class));
+        verify(atividadeRepository).save(argThat(a ->
+                a.getAluno().equals(aluno) &&
+                a.getProfessorOrientador().equals(professor) &&
+                a.getTurma().equals(turma) &&
+                a.getProntuario().equals("ABC123")));
     }
 
     @Test
