@@ -41,7 +41,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(dto.status() != null ? dto.status() : StatusAtividade.PENDENTE)
+                .status(dto.status())
                 .aluno(aluno)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)
@@ -81,20 +81,20 @@ public class AtividadeService {
     public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId) {
         Page<Atividade> page;
         if (alunoId != null && turmaId != null) {
-            page = atividadeRepository.findByAlunoIdAndTurmaId(alunoId, turmaId, pageable);
+            page = atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(alunoId, turmaId, pageable);
         } else if (alunoId != null) {
-            page = atividadeRepository.findByAlunoId(alunoId, pageable);
+            page = atividadeRepository.findByActiveTrueAndAlunoId(alunoId, pageable);
         } else if (turmaId != null) {
-            page = atividadeRepository.findByTurmaId(turmaId, pageable);
+            page = atividadeRepository.findByActiveTrueAndTurmaId(turmaId, pageable);
         } else {
-            page = atividadeRepository.findAll(pageable);
+            page = atividadeRepository.findByActiveTrue(pageable);
         }
         return page.map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser) {
-        return atividadeRepository.findByAlunoId(loggedUser.getId(), pageable)
+        return atividadeRepository.findByActiveTrueAndAlunoId(loggedUser.getId(), pageable)
                 .map(atividadeMapper::toResponseSemFeedback);
     }
 
@@ -131,17 +131,18 @@ public class AtividadeService {
     }
 
     @Transactional
-    public AtividadeResponseDTO updateDadosBasicos(Long id, UpdateAtividadeRequestDTO dto, User loggedUser) {
+    public AtividadeResponseDTO updateDadosBasicos(Long id, UpdateAtividadeAlunoRequestDTO dto, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
 
         if (!atividade.getAluno().getId().equals(loggedUser.getId())) {
             throw new ResourceNotFoundException("Atividade não encontrada: " + id);
         }
 
-        if (dto.data() != null)         atividade.setData(dto.data());
-        if (dto.prontuario() != null)   atividade.setProntuario(dto.prontuario());
-        if (dto.nomePaciente() != null) atividade.setNomePaciente(dto.nomePaciente());
-        if (dto.observacoes() != null)  atividade.setObservacoes(dto.observacoes());
+        if (dto.data() != null)            atividade.setData(dto.data());
+        if (dto.dataConclusao() != null)   atividade.setDataConclusao(dto.dataConclusao());
+        if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
+        if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
+        if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
 
         return atividadeMapper.toResponseSemFeedback(atividadeRepository.save(atividade));
     }
@@ -161,7 +162,7 @@ public class AtividadeService {
     }
 
     private Atividade findAtividadeById(Long id) {
-        return atividadeRepository.findById(id)
+        return atividadeRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Atividade não encontrada: " + id));
     }
 

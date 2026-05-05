@@ -138,7 +138,7 @@ class AtividadeServiceTest {
 
     @Test
     void findById_professorRecebeRespostaComFeedback() {
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.findById(100L, professor);
@@ -150,7 +150,7 @@ class AtividadeServiceTest {
 
     @Test
     void findById_alunoRecebeRespostaSemFeedback() {
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.findById(100L, aluno);
@@ -163,7 +163,7 @@ class AtividadeServiceTest {
     @Test
     void findById_alunoNaoPodeVerAtividadeDeOutroAluno() {
         User outroAluno = User.builder().id(99L).role(Role.ALUNO).build();
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
         assertThatThrownBy(() -> atividadeService.findById(100L, outroAluno))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -171,10 +171,10 @@ class AtividadeServiceTest {
 
     @Test
     void updateDadosBasicos_alunoAtualizaCamposPermitidos() {
-        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
-                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null, null, null, null);
+        UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
+                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null);
 
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
         when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
 
@@ -187,10 +187,10 @@ class AtividadeServiceTest {
     @Test
     void updateDadosBasicos_alunoNaoPodeEditarAtividadeDeOutroAluno() {
         User outroAluno = User.builder().id(99L).role(Role.ALUNO).build();
-        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
-                null, null, "XYZ", null, null, null, null, null);
+        UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
+                null, null, "XYZ", null, null);
 
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
         assertThatThrownBy(() -> atividadeService.updateDadosBasicos(100L, dto, outroAluno))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -200,7 +200,7 @@ class AtividadeServiceTest {
     void updateStatus_professorAtualizaStatus() {
         UpdateStatusAtividadeRequestDTO dto = new UpdateStatusAtividadeRequestDTO(StatusAtividade.CONCLUIDA);
 
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
@@ -211,10 +211,25 @@ class AtividadeServiceTest {
 
     @Test
     void delete_defineCampoActiveComoFalse() {
-        when(atividadeRepository.findById(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
         atividadeService.delete(100L);
 
         verify(atividadeRepository).save(argThat(a -> !a.isActive()));
+    }
+
+    @Test
+    void delete_naoPodeAcessarAtividadeDeletada() {
+        // After delete, findByIdAndActiveTrue should return empty
+        Atividade inativa = Atividade.builder()
+                .id(100L)
+                .active(false)
+                .aluno(aluno)
+                .build();
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> atividadeService.findById(100L, professor))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

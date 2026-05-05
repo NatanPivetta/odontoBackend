@@ -6,14 +6,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
 
-    Page<Atividade> findByAlunoId(Long alunoId, Pageable pageable);
+    Optional<Atividade> findByIdAndActiveTrue(Long id);
 
-    Page<Atividade> findByTurmaId(Long turmaId, Pageable pageable);
+    Page<Atividade> findByActiveTrue(Pageable pageable);
 
-    Page<Atividade> findByAlunoIdAndTurmaId(Long alunoId, Long turmaId, Pageable pageable);
+    Page<Atividade> findByActiveTrueAndAlunoId(Long alunoId, Pageable pageable);
+
+    Page<Atividade> findByActiveTrueAndTurmaId(Long turmaId, Pageable pageable);
+
+    Page<Atividade> findByActiveTrueAndAlunoIdAndTurmaId(Long alunoId, Long turmaId, Pageable pageable);
 
     List<Atividade> findByAtividadePaiId(Long atividadePaiId);
 }

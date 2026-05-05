@@ -117,7 +117,7 @@ public class AtividadeResource {
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})
     public AtividadeResponseDTO updateDadosBasicos(@PathVariable Long id,
-                                                    @Valid @RequestBody UpdateAtividadeRequestDTO request,
+                                                    @Valid @RequestBody UpdateAtividadeAlunoRequestDTO request,
                                                     @AuthenticationPrincipal User loggedUser) {
         return atividadeService.updateDadosBasicos(id, request, loggedUser);
     }
