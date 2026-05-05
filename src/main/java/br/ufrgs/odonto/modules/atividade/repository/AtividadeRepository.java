@@ -20,5 +20,5 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
 
     Page<Atividade> findByActiveTrueAndAlunoIdAndTurmaId(Long alunoId, Long turmaId, Pageable pageable);
 
-    List<Atividade> findByAtividadePaiId(Long atividadePaiId);
+    List<Atividade> findByActiveTrueAndAtividadePaiId(Long atividadePaiId);
 }

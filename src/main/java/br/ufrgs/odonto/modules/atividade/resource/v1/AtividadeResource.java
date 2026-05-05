@@ -112,7 +112,7 @@ public class AtividadeResource {
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ALUNO')")
     @Operation(summary = "Atualizar dados básicos da atividade (aluno)",
-            description = "Aluno pode atualizar apenas data, prontuário, nome do paciente e observações.",
+            description = "Aluno pode atualizar apenas data, dataConclusão, prontuário, nome do paciente e observações.",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})

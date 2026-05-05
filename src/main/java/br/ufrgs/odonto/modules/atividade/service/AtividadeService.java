@@ -13,6 +13,7 @@ import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
 import br.ufrgs.odonto.modules.turma.repository.TurmaRepository;
 import lombok.RequiredArgsConstructor;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class AtividadeService {
     @Transactional
     public AtividadeResponseDTO create(CreateAtividadeRequestDTO dto) {
         User aluno = findUserById(dto.alunoId());
+        if (aluno.getRole() != Role.ALUNO) {
+            throw new BusinessException("O usuário informado não possui o perfil de aluno");
+        }
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = findTurmaById(dto.turmaId());
@@ -66,7 +70,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(dto.status() != null ? dto.status() : StatusAtividade.PENDENTE)
+                .status(Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE))
                 .aluno(loggedUser)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)

@@ -91,6 +91,19 @@ class AtividadeServiceTest {
     }
 
     @Test
+    void create_deveLancarExcecaoQuandoAlunoNaoTemRoleAluno() {
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), null, "ABC123", null, null,
+                StatusAtividade.PENDENTE, 2L, 2L, null, 10L, null);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+
+        assertThatThrownBy(() -> atividadeService.create(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("aluno");
+    }
+
+    @Test
     void create_deveLancarExcecaoQuandoAlunoNaoEncontrado() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
@@ -220,16 +233,83 @@ class AtividadeServiceTest {
 
     @Test
     void delete_naoPodeAcessarAtividadeDeletada() {
-        // After delete, findByIdAndActiveTrue should return empty
-        Atividade inativa = Atividade.builder()
-                .id(100L)
-                .active(false)
-                .aluno(aluno)
-                .build();
-
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.findById(100L, professor))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void findAll_semFiltros_retornaPagina() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(atividadeRepository.findByActiveTrue(pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, null);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(atividadeRepository).findByActiveTrue(pageable);
+    }
+
+    @Test
+    void findAll_comAlunoId_retornaAtividadesDoAluno() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(atividadeRepository.findByActiveTrueAndAlunoId(1L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, null);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(atividadeRepository).findByActiveTrueAndAlunoId(1L, pageable);
+    }
+
+    @Test
+    void findAll_comTurmaId_retornaAtividadesDaTurma() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(atividadeRepository.findByActiveTrueAndTurmaId(10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, 10L);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(atividadeRepository).findByActiveTrueAndTurmaId(10L, pageable);
+    }
+
+    @Test
+    void findAll_comAlunoEturma_retornaAtividadesFiltradas() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, 10L);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(atividadeRepository).findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable);
+    }
+
+    @Test
+    void update_professorAtualizaCamposEFeedback() {
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
+                LocalDate.now().plusDays(1), null, "NEW123", null, null,
+                "feedback reservado", null, null);
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(atividade)).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.update(100L, dto);
+
+        verify(atividadeRepository).save(argThat(a ->
+                a.getProntuario().equals("NEW123") &&
+                "feedback reservado".equals(a.getFeedbackPrivado())));
+    }
+
+    @Test
+    void update_atividadeNaoEncontradaLancaExcecao() {
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null, null);
+        when(atividadeRepository.findByIdAndActiveTrue(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> atividadeService.update(999L, dto))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }
