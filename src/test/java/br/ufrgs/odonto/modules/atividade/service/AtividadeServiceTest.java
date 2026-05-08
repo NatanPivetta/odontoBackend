@@ -245,7 +245,7 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByActiveTrue(pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, null);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(atividadeRepository).findByActiveTrue(pageable);
@@ -257,7 +257,7 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByActiveTrueAndAlunoId(1L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, null);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, null, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(atividadeRepository).findByActiveTrueAndAlunoId(1L, pageable);
@@ -269,7 +269,7 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByActiveTrueAndTurmaId(10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, 10L);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, 10L, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(atividadeRepository).findByActiveTrueAndTurmaId(10L, pageable);
@@ -281,7 +281,7 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, 10L);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, 10L, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(atividadeRepository).findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable);
