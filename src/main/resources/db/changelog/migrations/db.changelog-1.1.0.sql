@@ -32,3 +32,6 @@ CREATE INDEX IF NOT EXISTS idx_atividades_aluno       ON atividades (aluno_id);
 CREATE INDEX IF NOT EXISTS idx_atividades_turma       ON atividades (turma_id);
 CREATE INDEX IF NOT EXISTS idx_atividades_pai         ON atividades (atividade_pai_id);
 CREATE INDEX IF NOT EXISTS idx_atividades_status      ON atividades (status);
+
+-- changeset natan.pivetta:20260504-3
+ALTER TABLE atividades ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
