@@ -62,12 +62,13 @@ public class AtividadeResource {
     public Page<AtividadeResponseDTO> findAll(
             @RequestParam(required = false) Long alunoId,
             @RequestParam(required = false) Long turmaId,
+            @RequestParam(required = false) Long atividadePaiId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(defaultValue = "data") String sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
         return atividadeService.findAll(
-                PageRequest.of(page, size, Sort.by(direction, sort)), alunoId, turmaId);
+                PageRequest.of(page, size, Sort.by(direction, sort)), alunoId, turmaId, atividadePaiId);
     }
 
     @GetMapping("/minhas")

@@ -82,9 +82,11 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId) {
+    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId, Long atividadePaiId) {
         Page<Atividade> page;
-        if (alunoId != null && turmaId != null) {
+        if (atividadePaiId != null) {
+            page = atividadeRepository.findByActiveTrueAndAtividadePaiId(atividadePaiId, pageable);
+        } else if (alunoId != null && turmaId != null) {
             page = atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(alunoId, turmaId, pageable);
         } else if (alunoId != null) {
             page = atividadeRepository.findByActiveTrueAndAlunoId(alunoId, pageable);
