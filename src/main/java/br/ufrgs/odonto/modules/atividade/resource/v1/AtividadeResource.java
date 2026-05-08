@@ -90,7 +90,6 @@ public class AtividadeResource {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
     @Operation(summary = "Buscar atividade por ID",
-            description = "Aluno não visualiza o campo feedbackPrivado.",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})

@@ -18,8 +18,6 @@ public record UpdateAtividadeRequestDTO(
 
         String observacoes,
 
-        String feedbackPrivado,
-
         Long professorOrientadorId,
 
         Long professorTutorId

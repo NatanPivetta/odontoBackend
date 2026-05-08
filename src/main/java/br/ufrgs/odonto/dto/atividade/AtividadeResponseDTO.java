@@ -14,7 +14,6 @@ public record AtividadeResponseDTO(
         String prontuario,
         String nomePaciente,
         String observacoes,
-        String feedbackPrivado,
         StatusAtividade status,
         UserResponseDTO aluno,
         UserResponseDTO professorOrientador,

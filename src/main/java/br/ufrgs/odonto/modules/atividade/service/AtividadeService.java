@@ -78,7 +78,7 @@ public class AtividadeService {
                 .atividadePai(atividadePai)
                 .build();
 
-        return atividadeMapper.toResponseSemFeedback(atividadeRepository.save(atividade));
+        return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
 
     @Transactional(readOnly = true)
@@ -101,17 +101,14 @@ public class AtividadeService {
     @Transactional(readOnly = true)
     public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser) {
         return atividadeRepository.findByActiveTrueAndAlunoId(loggedUser.getId(), pageable)
-                .map(atividadeMapper::toResponseSemFeedback);
+                .map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public AtividadeResponseDTO findById(Long id, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
-        if (loggedUser.getRole() == Role.ALUNO) {
-            if (!atividade.getAluno().getId().equals(loggedUser.getId())) {
-                throw new ResourceNotFoundException("Atividade não encontrada: " + id);
-            }
-            return atividadeMapper.toResponseSemFeedback(atividade);
+        if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
+            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
         }
         return atividadeMapper.toResponse(atividade);
     }
@@ -125,7 +122,6 @@ public class AtividadeService {
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
-        if (dto.feedbackPrivado() != null) atividade.setFeedbackPrivado(dto.feedbackPrivado());
         if (dto.professorOrientadorId() != null) {
             atividade.setProfessorOrientador(findUserById(dto.professorOrientadorId()));
         }
@@ -150,7 +146,7 @@ public class AtividadeService {
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
 
-        return atividadeMapper.toResponseSemFeedback(atividadeRepository.save(atividade));
+        return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
 
     @Transactional

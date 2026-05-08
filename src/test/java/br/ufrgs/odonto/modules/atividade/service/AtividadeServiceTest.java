@@ -64,7 +64,7 @@ class AtividadeServiceTest {
                 .active(true)
                 .build();
         responseDTO = new AtividadeResponseDTO(100L, LocalDate.now(), null, "ABC123",
-                null, null, null, StatusAtividade.PENDENTE,
+                null, null, StatusAtividade.PENDENTE,
                 null, null, null, null, null, null);
     }
 
@@ -125,7 +125,7 @@ class AtividadeServiceTest {
         when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
                 .thenReturn(Optional.of(turma));
         when(atividadeRepository.save(any())).thenReturn(atividade);
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.createAsAluno(dto, aluno);
 
@@ -150,7 +150,7 @@ class AtividadeServiceTest {
     }
 
     @Test
-    void findById_professorRecebeRespostaComFeedback() {
+    void findById_professorRecebeResposta() {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
@@ -158,19 +158,17 @@ class AtividadeServiceTest {
 
         assertThat(result).isEqualTo(responseDTO);
         verify(atividadeMapper).toResponse(atividade);
-        verify(atividadeMapper, never()).toResponseSemFeedback(any());
     }
 
     @Test
-    void findById_alunoRecebeRespostaSemFeedback() {
+    void findById_alunoRecebeResposta() {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.findById(100L, aluno);
 
         assertThat(result).isEqualTo(responseDTO);
-        verify(atividadeMapper).toResponseSemFeedback(atividade);
-        verify(atividadeMapper, never()).toResponse(any());
+        verify(atividadeMapper).toResponse(atividade);
     }
 
     @Test
@@ -189,7 +187,7 @@ class AtividadeServiceTest {
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         atividadeService.updateDadosBasicos(100L, dto, aluno);
 
@@ -288,10 +286,9 @@ class AtividadeServiceTest {
     }
 
     @Test
-    void update_professorAtualizaCamposEFeedback() {
+    void update_professorAtualizaCampos() {
         UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
-                LocalDate.now().plusDays(1), null, "NEW123", null, null,
-                "feedback reservado", null, null);
+                LocalDate.now().plusDays(1), null, "NEW123", null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
@@ -299,14 +296,12 @@ class AtividadeServiceTest {
 
         atividadeService.update(100L, dto);
 
-        verify(atividadeRepository).save(argThat(a ->
-                a.getProntuario().equals("NEW123") &&
-                "feedback reservado".equals(a.getFeedbackPrivado())));
+        verify(atividadeRepository).save(argThat(a -> a.getProntuario().equals("NEW123")));
     }
 
     @Test
     void update_atividadeNaoEncontradaLancaExcecao() {
-        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null, null);
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null);
         when(atividadeRepository.findByIdAndActiveTrue(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.update(999L, dto))

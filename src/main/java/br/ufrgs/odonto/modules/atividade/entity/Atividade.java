@@ -36,9 +36,6 @@ public class Atividade extends Auditable<String> {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
-    @Column(name = "feedback_privado", columnDefinition = "TEXT")
-    private String feedbackPrivado;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
