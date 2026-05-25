@@ -16,6 +16,7 @@ import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
 import br.ufrgs.odonto.modules.turma.repository.TurmaRepository;
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ public class AtividadeService {
             throw new BusinessException("O usuário informado não possui o perfil de aluno");
         }
         validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+        validarDataConclusao(dto.dataConclusao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = findTurmaById(dto.turmaId());
@@ -49,7 +51,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(dto.status())
+                .status(resolverStatus(dto.data(), dto.status()))
                 .tipo(dto.tipo())
                 .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(aluno)
@@ -65,6 +67,7 @@ public class AtividadeService {
     @Transactional
     public AtividadeResponseDTO createAsAluno(CreateAtividadeAlunoRequestDTO dto, User loggedUser) {
         validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+        validarDataConclusao(dto.dataConclusao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = turmaRepository.findByActiveTrueAndAlunosContaining(loggedUser)
@@ -77,7 +80,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE))
+                .status(resolverStatus(dto.data(), Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE)))
                 .tipo(dto.tipo())
                 .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(loggedUser)
@@ -127,6 +130,7 @@ public class AtividadeService {
     public AtividadeResponseDTO update(Long id, UpdateAtividadeRequestDTO dto) {
         Atividade atividade = findAtividadeById(id);
 
+        if (dto.dataConclusao() != null)   validarDataConclusao(dto.dataConclusao());
         if (dto.data() != null)            atividade.setData(dto.data());
         if (dto.dataConclusao() != null)   atividade.setDataConclusao(dto.dataConclusao());
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
@@ -155,6 +159,7 @@ public class AtividadeService {
             throw new ResourceNotFoundException("Atividade não encontrada: " + id);
         }
 
+        if (dto.dataConclusao() != null)   validarDataConclusao(dto.dataConclusao());
         if (dto.data() != null)            atividade.setData(dto.data());
         if (dto.dataConclusao() != null)   atividade.setDataConclusao(dto.dataConclusao());
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
@@ -201,6 +206,19 @@ public class AtividadeService {
         if (tipo == TipoAtividade.OUTROS && (tipoDescricao == null || tipoDescricao.isBlank())) {
             throw new BusinessException("Campo 'tipoDescricao' é obrigatório quando o tipo for OUTROS");
         }
+    }
+
+    private void validarDataConclusao(LocalDate dataConclusao) {
+        if (dataConclusao != null && dataConclusao.isAfter(LocalDate.now())) {
+            throw new BusinessException("A data de conclusão não pode ser uma data futura");
+        }
+    }
+
+    private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado) {
+        if (data != null && data.isAfter(LocalDate.now())) {
+            return StatusAtividade.PENDENTE;
+        }
+        return statusSolicitado;
     }
 
     private Atividade findAtividadeById(Long id) {

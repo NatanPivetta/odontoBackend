@@ -238,6 +238,97 @@ class AtividadeServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    // ── Regras de data ────────────────────────────────────────────
+
+    @Test
+    void create_dataFuturaForcaStatusPendente() {
+        LocalDate futuro = LocalDate.now().plusDays(5);
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                futuro, null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.create(dto);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.PENDENTE));
+    }
+
+    @Test
+    void create_dataHojeMantémStatusInformado() {
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.create(dto);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.CONCLUIDA));
+    }
+
+    @Test
+    void create_dataConclusaoFuturaLancaExcecao() {
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), LocalDate.now().plusDays(1), "ABC123", null, null,
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+
+        assertThatThrownBy(() -> atividadeService.create(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
+    @Test
+    void createAsAluno_dataFuturaForcaStatusPendente() {
+        LocalDate futuro = LocalDate.now().plusDays(3);
+        CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
+                futuro, null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 2L, null, null);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.createAsAluno(dto, aluno);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.PENDENTE));
+    }
+
+    @Test
+    void updateDadosBasicos_dataConclusaoFuturaLancaExcecao() {
+        UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
+                null, LocalDate.now().plusDays(1), null, null, null, null, null, null);
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.updateDadosBasicos(100L, dto, aluno))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
+    @Test
+    void update_dataConclusaoFuturaLancaExcecao() {
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
+                null, LocalDate.now().plusDays(1), null, null, null, null, null, null, null);
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.update(100L, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
     @Test
     void findAll_semFiltros_retornaPagina() {
         Pageable pageable = PageRequest.of(0, 20);
