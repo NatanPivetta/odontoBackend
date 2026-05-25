@@ -186,15 +186,19 @@ jobs:
 
           echo "Comando SSM enviado: $CMD_ID"
 
-          # Aguarda completar (|| true para nao matar o script antes de exibir o erro)
-          aws ssm wait command-executed \
-            --command-id "$CMD_ID" \
-            --instance-id "$EC2_INSTANCE_ID" || true
-
-          STATUS=$(aws ssm get-command-invocation \
-            --command-id "$CMD_ID" \
-            --instance-id "$EC2_INSTANCE_ID" \
-            --query "Status" --output text)
+          # Polling custom: até 60 tentativas × 10 s = 10 minutos
+          STATUS="InProgress"
+          for i in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$CMD_ID" \
+              --instance-id "$EC2_INSTANCE_ID" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            echo "[$i/60] Status: $STATUS"
+            case "$STATUS" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 10
+          done
 
           echo "Status final: $STATUS"
 
