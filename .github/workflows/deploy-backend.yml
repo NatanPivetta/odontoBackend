@@ -74,39 +74,29 @@ jobs:
           set -euo pipefail
 
           cat > /tmp/patch.py << 'PYEOF'
-import sys, re
-
-with open('/opt/odonto/run.sh', 'r') as f:
-    s = f.read()
-
-# Corrige run.sh quebrado por patch anterior (docker pull mangled)
-if 'MAIL_USER=' in s and 'docker pull "$IMAGE"' not in s:
-    s = re.sub(r'docker pull\s+.*?"?\$IMAGE"?', 'docker pull "$IMAGE"', s, flags=re.DOTALL)
-    print('Corrigido docker pull quebrado')
-
-# Idempotente: sai se ja tem suporte correto
-if 'MAIL_USER=' in s and 'MAIL_USERNAME' in s:
-    print('run.sh ja tem mail support'); sys.exit(0)
-
-# 1) Adiciona fetch dos params apos JWT_VALUE
-s = re.sub(
-    r'(JWT_VALUE=.*)',
-    r'\1\nMAIL_USER="$(get_param "${PARAM_PREFIX}/mail/username")"\nMAIL_PASS="$(get_param "${PARAM_PREFIX}/mail/password")"',
-    s
-)
-
-# 2) Substitui apenas a ULTIMA ocorrencia de "$IMAGE" (docker run, nao docker pull)
-marker = '"$IMAGE"'
-last = s.rfind(marker)
-if last == -1:
-    print('ERRO: "$IMAGE" nao encontrado'); sys.exit(1)
-replacement = '  -e MAIL_USERNAME="$MAIL_USER" \\\n  -e MAIL_PASSWORD="$MAIL_PASS" \\\n  "$IMAGE"'
-s = s[:last] + replacement + s[last + len(marker):]
-
-with open('/opt/odonto/run.sh', 'w') as f:
-    f.write(s)
-print('Patch aplicado com sucesso')
-PYEOF
+          import sys, re
+          with open('/opt/odonto/run.sh', 'r') as f:
+              s = f.read()
+          if 'MAIL_USER=' in s and 'docker pull "$IMAGE"' not in s:
+              s = re.sub(r'docker pull\s+.*?"?\$IMAGE"?', 'docker pull "$IMAGE"', s, flags=re.DOTALL)
+              print('Corrigido docker pull quebrado')
+          if 'MAIL_USER=' in s and 'MAIL_USERNAME' in s:
+              print('run.sh ja tem mail support'); sys.exit(0)
+          s = re.sub(
+              r'(JWT_VALUE=.*)',
+              r'\1\nMAIL_USER="$(get_param "${PARAM_PREFIX}/mail/username")"\nMAIL_PASS="$(get_param "${PARAM_PREFIX}/mail/password")"',
+              s
+          )
+          marker = '"$IMAGE"'
+          last = s.rfind(marker)
+          if last == -1:
+              print('ERRO: "$IMAGE" nao encontrado'); sys.exit(1)
+          replacement = '  -e MAIL_USERNAME="$MAIL_USER" \\\n  -e MAIL_PASSWORD="$MAIL_PASS" \\\n  "$IMAGE"'
+          s = s[:last] + replacement + s[last + len(marker):]
+          with open('/opt/odonto/run.sh', 'w') as f:
+              f.write(s)
+          print('Patch aplicado com sucesso')
+          PYEOF
 
           ENCODED=$(base64 -w 0 /tmp/patch.py)
 
