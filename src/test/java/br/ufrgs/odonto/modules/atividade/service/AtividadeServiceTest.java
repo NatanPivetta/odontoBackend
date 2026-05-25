@@ -123,7 +123,7 @@ class AtividadeServiceTest {
                 StatusAtividade.PENDENTE, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
-        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
+        when(turmaRepository.findActiveTurmaForAluno(aluno))
                 .thenReturn(Optional.of(turma));
         when(atividadeRepository.save(any())).thenReturn(atividade);
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
@@ -131,7 +131,7 @@ class AtividadeServiceTest {
         AtividadeResponseDTO result = atividadeService.createAsAluno(dto, aluno);
 
         assertThat(result).isNotNull();
-        verify(turmaRepository).findByActiveTrueAndAlunosContaining(aluno);
+        verify(turmaRepository).findActiveTurmaForAluno(aluno);
         verify(atividadeRepository).save(argThat(a -> a.getTurma().equals(turma)));
     }
 
@@ -142,7 +142,7 @@ class AtividadeServiceTest {
                 null, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
-        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
+        when(turmaRepository.findActiveTurmaForAluno(aluno))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.createAsAluno(dto, aluno))
@@ -296,7 +296,7 @@ class AtividadeServiceTest {
                 StatusAtividade.CONCLUIDA, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
-        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno)).thenReturn(Optional.of(turma));
+        when(turmaRepository.findActiveTurmaForAluno(aluno)).thenReturn(Optional.of(turma));
         when(atividadeRepository.save(any())).thenReturn(atividade);
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 

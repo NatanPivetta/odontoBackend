@@ -10,7 +10,10 @@ import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
+import br.ufrgs.odonto.modules.turma.entity.TurmaAluno;
+import br.ufrgs.odonto.modules.turma.entity.TurmaAlunoId;
 import br.ufrgs.odonto.modules.turma.mapper.TurmaMapper;
+import br.ufrgs.odonto.modules.turma.repository.TurmaAlunoRepository;
 import br.ufrgs.odonto.modules.turma.repository.TurmaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +29,7 @@ import java.util.List;
 public class TurmaService {
 
     private final TurmaRepository turmaRepository;
+    private final TurmaAlunoRepository turmaAlunoRepository;
     private final UserRepository userRepository;
     private final TurmaMapper turmaMapper;
 
@@ -74,12 +78,14 @@ public class TurmaService {
         Turma turma = findTurmaById(turmaId);
         User aluno = findAlunoById(alunoId);
 
-        if (turma.getAlunos().contains(aluno)) {
+        if (turmaAlunoRepository.findByTurmaAndAluno(turma, aluno).isPresent()) {
             throw new BusinessException("Aluno já matriculado nesta turma");
         }
 
-        turma.getAlunos().add(aluno);
-        return turmaMapper.toResponse(turmaRepository.save(turma));
+        desativarMatriculasAtivas(aluno);
+        matricular(turma, aluno);
+
+        return turmaMapper.toResponse(findTurmaById(turmaId));
     }
 
     @Transactional
@@ -87,11 +93,10 @@ public class TurmaService {
         Turma turma = findTurmaById(turmaId);
         User aluno = findAlunoById(alunoId);
 
-        if (!turma.getAlunos().remove(aluno)) {
-            throw new BusinessException("Aluno não está matriculado nesta turma");
-        }
+        TurmaAluno matricula = turmaAlunoRepository.findByTurmaAndAluno(turma, aluno)
+                .orElseThrow(() -> new BusinessException("Aluno não está matriculado nesta turma"));
 
-        turmaRepository.save(turma);
+        turmaAlunoRepository.delete(matricula);
     }
 
     @Transactional
@@ -102,17 +107,38 @@ public class TurmaService {
             if (aluno.getRole() != Role.ALUNO) {
                 throw new BusinessException("Usuário " + aluno.getId() + " não possui o papel de ALUNO");
             }
-            turma.getAlunos().add(aluno);
+            if (turmaAlunoRepository.findByTurmaAndAluno(turma, aluno).isPresent()) {
+                return; // idempotente: já matriculado nesta turma, ignora
+            }
+            desativarMatriculasAtivas(aluno);
+            matricular(turma, aluno);
         });
-        return turmaMapper.toResponse(turmaRepository.save(turma));
+        return turmaMapper.toResponse(findTurmaById(turmaId));
     }
 
     @Transactional
     public void removeAlunosBulk(Long turmaId, BulkAlunoRequestDTO request) {
         Turma turma = findTurmaById(turmaId);
         List<User> alunos = userRepository.findAllById(request.alunoIds());
-        alunos.forEach(aluno -> turma.getAlunos().remove(aluno));
-        turmaRepository.save(turma);
+        alunos.forEach(aluno ->
+                turmaAlunoRepository.findByTurmaAndAluno(turma, aluno)
+                        .ifPresent(turmaAlunoRepository::delete)
+        );
+    }
+
+    private void desativarMatriculasAtivas(User aluno) {
+        List<TurmaAluno> ativas = turmaAlunoRepository.findByAlunoAndActiveTrue(aluno);
+        ativas.forEach(m -> m.setActive(false));
+        turmaAlunoRepository.saveAll(ativas);
+    }
+
+    private void matricular(Turma turma, User aluno) {
+        TurmaAluno matricula = TurmaAluno.builder()
+                .id(new TurmaAlunoId(turma.getId(), aluno.getId()))
+                .turma(turma)
+                .aluno(aluno)
+                .build();
+        turmaAlunoRepository.save(matricula);
     }
 
     private Turma findTurmaById(Long id) {

@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 @Mapper(uses = UserMapper.class)
 public interface TurmaMapper {
 
-    @Mapping(target = "alunos", source = "alunos")
+    @Mapping(target = "alunos", source = "alunosAtivos")
     TurmaResponseDTO toResponse(Turma turma);
 
     TurmaResumoDTO toResumo(Turma turma);

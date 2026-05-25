@@ -70,7 +70,7 @@ public class AtividadeService {
         validarDataConclusao(dto.dataConclusao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
-        Turma turma = turmaRepository.findByActiveTrueAndAlunosContaining(loggedUser)
+        Turma turma = turmaRepository.findActiveTurmaForAluno(loggedUser)
                 .orElseThrow(() -> new BusinessException("Aluno não possui turma ativa no semestre atual"));
         Atividade atividadePai = dto.atividadePaiId() != null ? findAtividadeById(dto.atividadePaiId()) : null;
 
