@@ -65,14 +65,14 @@ class AtividadeServiceTest {
                 .build();
         responseDTO = new AtividadeResponseDTO(100L, LocalDate.now(), null, "ABC123",
                 null, null, StatusAtividade.PENDENTE,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
     }
 
     @Test
     void create_deveSalvarAtividadeComTodosOsCampos() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 1L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, null);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
@@ -94,7 +94,7 @@ class AtividadeServiceTest {
     void create_deveLancarExcecaoQuandoAlunoNaoTemRoleAluno() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 2L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 2L, 2L, null, 10L, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
 
@@ -107,7 +107,7 @@ class AtividadeServiceTest {
     void create_deveLancarExcecaoQuandoAlunoNaoEncontrado() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 99L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 99L, 2L, null, 10L, null);
 
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -119,7 +119,7 @@ class AtividadeServiceTest {
     void createAsAluno_deveInferirTurmaDoAluno() {
         CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 2L, null, null);
+                StatusAtividade.PENDENTE, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
         when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
@@ -138,7 +138,7 @@ class AtividadeServiceTest {
     void createAsAluno_deveLancarExcecaoQuandoSemTurmaAtiva() {
         CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                null, 2L, null, null);
+                null, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
         when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
@@ -183,7 +183,7 @@ class AtividadeServiceTest {
     @Test
     void updateDadosBasicos_alunoAtualizaCamposPermitidos() {
         UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
-                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null);
+                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
@@ -199,7 +199,7 @@ class AtividadeServiceTest {
     void updateDadosBasicos_alunoNaoPodeEditarAtividadeDeOutroAluno() {
         User outroAluno = User.builder().id(99L).role(Role.ALUNO).build();
         UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
-                null, null, "XYZ", null, null);
+                null, null, "XYZ", null, null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
@@ -288,7 +288,7 @@ class AtividadeServiceTest {
     @Test
     void update_professorAtualizaCampos() {
         UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
-                LocalDate.now().plusDays(1), null, "NEW123", null, null, null, null);
+                LocalDate.now().plusDays(1), null, "NEW123", null, null, null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
@@ -301,7 +301,7 @@ class AtividadeServiceTest {
 
     @Test
     void update_atividadeNaoEncontradaLancaExcecao() {
-        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null);
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null, null, null);
         when(atividadeRepository.findByIdAndActiveTrue(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.update(999L, dto))
