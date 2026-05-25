@@ -6,8 +6,11 @@ import br.ufrgs.odonto.exception.BusinessException;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import br.ufrgs.odonto.modules.atividade.mapper.AtividadeMapper;
 import br.ufrgs.odonto.modules.atividade.repository.AtividadeRepository;
+import br.ufrgs.odonto.modules.atividade.repository.AtividadeSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
@@ -34,6 +37,7 @@ public class AtividadeService {
         if (aluno.getRole() != Role.ALUNO) {
             throw new BusinessException("O usuário informado não possui o perfil de aluno");
         }
+        validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = findTurmaById(dto.turmaId());
@@ -46,6 +50,8 @@ public class AtividadeService {
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
                 .status(dto.status())
+                .tipo(dto.tipo())
+                .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(aluno)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)
@@ -58,6 +64,7 @@ public class AtividadeService {
 
     @Transactional
     public AtividadeResponseDTO createAsAluno(CreateAtividadeAlunoRequestDTO dto, User loggedUser) {
+        validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = turmaRepository.findByActiveTrueAndAlunosContaining(loggedUser)
@@ -71,6 +78,8 @@ public class AtividadeService {
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
                 .status(Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE))
+                .tipo(dto.tipo())
+                .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(loggedUser)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)
@@ -82,26 +91,27 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId, Long atividadePaiId) {
-        Page<Atividade> page;
-        if (atividadePaiId != null) {
-            page = atividadeRepository.findByActiveTrueAndAtividadePaiId(atividadePaiId, pageable);
-        } else if (alunoId != null && turmaId != null) {
-            page = atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(alunoId, turmaId, pageable);
-        } else if (alunoId != null) {
-            page = atividadeRepository.findByActiveTrueAndAlunoId(alunoId, pageable);
-        } else if (turmaId != null) {
-            page = atividadeRepository.findByActiveTrueAndTurmaId(turmaId, pageable);
-        } else {
-            page = atividadeRepository.findByActiveTrue(pageable);
-        }
-        return page.map(atividadeMapper::toResponse);
+    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId,
+                                              Long atividadePaiId, Long professorOrientadorId,
+                                              Long professorTutorId, TipoAtividade tipo,
+                                              StatusAtividade status) {
+        Specification<Atividade> spec = Specification.where(AtividadeSpecification.isActive());
+        if (alunoId != null)                spec = spec.and(AtividadeSpecification.byAlunoId(alunoId));
+        if (turmaId != null)                spec = spec.and(AtividadeSpecification.byTurmaId(turmaId));
+        if (atividadePaiId != null)         spec = spec.and(AtividadeSpecification.byAtividadePaiId(atividadePaiId));
+        if (professorOrientadorId != null)  spec = spec.and(AtividadeSpecification.byProfessorOrientadorId(professorOrientadorId));
+        if (professorTutorId != null)       spec = spec.and(AtividadeSpecification.byProfessorTutorId(professorTutorId));
+        if (tipo != null)                   spec = spec.and(AtividadeSpecification.byTipo(tipo));
+        if (status != null)                 spec = spec.and(AtividadeSpecification.byStatus(status));
+        return atividadeRepository.findAll(spec, pageable).map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser) {
-        return atividadeRepository.findByActiveTrueAndAlunoId(loggedUser.getId(), pageable)
-                .map(atividadeMapper::toResponse);
+    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser, TipoAtividade tipo) {
+        Specification<Atividade> spec = Specification.where(AtividadeSpecification.isActive())
+                .and(AtividadeSpecification.byAlunoId(loggedUser.getId()));
+        if (tipo != null) spec = spec.and(AtividadeSpecification.byTipo(tipo));
+        return atividadeRepository.findAll(spec, pageable).map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -122,6 +132,11 @@ public class AtividadeService {
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
+        if (dto.tipo() != null) {
+            validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+            atividade.setTipo(dto.tipo());
+            atividade.setTipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null);
+        }
         if (dto.professorOrientadorId() != null) {
             atividade.setProfessorOrientador(findUserById(dto.professorOrientadorId()));
         }
@@ -145,13 +160,32 @@ public class AtividadeService {
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
+        if (dto.tipo() != null) {
+            validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+            atividade.setTipo(dto.tipo());
+            atividade.setTipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null);
+        }
+        if (dto.professorTutorId() != null) {
+            atividade.setProfessorTutor(findUserById(dto.professorTutorId()));
+        }
 
         return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
 
     @Transactional
-    public AtividadeResponseDTO updateStatus(Long id, UpdateStatusAtividadeRequestDTO dto) {
+    public AtividadeResponseDTO updateStatus(Long id, UpdateStatusAtividadeRequestDTO dto, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
+        if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
+            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
+        }
+        if (dto.status() == StatusAtividade.ALTA) {
+            if (loggedUser.getRole() != Role.PROFESSOR) {
+                throw new BusinessException("Apenas professores podem registrar a alta do paciente");
+            }
+            if (atividade.getStatus() != StatusAtividade.CONCLUIDA) {
+                throw new BusinessException("A alta só pode ser registrada em atividades com status CONCLUIDA");
+            }
+        }
         atividade.setStatus(dto.status());
         return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
@@ -161,6 +195,12 @@ public class AtividadeService {
         Atividade atividade = findAtividadeById(id);
         atividade.setActive(false);
         atividadeRepository.save(atividade);
+    }
+
+    private void validarTipoDescricao(TipoAtividade tipo, String tipoDescricao) {
+        if (tipo == TipoAtividade.OUTROS && (tipoDescricao == null || tipoDescricao.isBlank())) {
+            throw new BusinessException("Campo 'tipoDescricao' é obrigatório quando o tipo for OUTROS");
+        }
     }
 
     private Atividade findAtividadeById(Long id) {

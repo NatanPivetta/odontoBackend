@@ -1,5 +1,6 @@
 package br.ufrgs.odonto.modules.turma.service;
 
+import br.ufrgs.odonto.dto.turma.BulkAlunoRequestDTO;
 import br.ufrgs.odonto.dto.turma.CreateTurmaRequestDTO;
 import br.ufrgs.odonto.dto.turma.TurmaResponseDTO;
 import br.ufrgs.odonto.dto.turma.UpdateTurmaRequestDTO;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -88,6 +91,27 @@ public class TurmaService {
             throw new BusinessException("Aluno não está matriculado nesta turma");
         }
 
+        turmaRepository.save(turma);
+    }
+
+    @Transactional
+    public TurmaResponseDTO addAlunosBulk(Long turmaId, BulkAlunoRequestDTO request) {
+        Turma turma = findTurmaById(turmaId);
+        List<User> alunos = userRepository.findAllById(request.alunoIds());
+        alunos.forEach(aluno -> {
+            if (aluno.getRole() != Role.ALUNO) {
+                throw new BusinessException("Usuário " + aluno.getId() + " não possui o papel de ALUNO");
+            }
+            turma.getAlunos().add(aluno);
+        });
+        return turmaMapper.toResponse(turmaRepository.save(turma));
+    }
+
+    @Transactional
+    public void removeAlunosBulk(Long turmaId, BulkAlunoRequestDTO request) {
+        Turma turma = findTurmaById(turmaId);
+        List<User> alunos = userRepository.findAllById(request.alunoIds());
+        alunos.forEach(aluno -> turma.getAlunos().remove(aluno));
         turmaRepository.save(turma);
     }
 

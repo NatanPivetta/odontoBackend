@@ -1,5 +1,6 @@
 package br.ufrgs.odonto.modules.turma.resource.v1;
 
+import br.ufrgs.odonto.dto.turma.BulkAlunoRequestDTO;
 import br.ufrgs.odonto.dto.turma.CreateTurmaRequestDTO;
 import br.ufrgs.odonto.dto.turma.TurmaResponseDTO;
 import br.ufrgs.odonto.dto.turma.UpdateTurmaRequestDTO;
@@ -103,5 +104,29 @@ public class TurmaResource {
             responses = {@ApiResponse(responseCode = "204")})
     public void removeAluno(@PathVariable Long id, @PathVariable Long alunoId) {
         turmaService.removeAluno(id, alunoId);
+    }
+
+    @PostMapping("/{id}/alunos/bulk")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    @Operation(summary = "Matricular vários alunos na turma",
+            description = "Alunos já matriculados são ignorados (idempotente).",
+            security = {@SecurityRequirement(name = "bearerAuth")},
+            responses = {@ApiResponse(responseCode = "200", content = @Content(
+                    schema = @Schema(implementation = TurmaResponseDTO.class)))})
+    public TurmaResponseDTO addAlunosBulk(@PathVariable Long id,
+                                          @Valid @RequestBody BulkAlunoRequestDTO request) {
+        return turmaService.addAlunosBulk(id, request);
+    }
+
+    @DeleteMapping("/{id}/alunos/bulk")
+    @ResponseStatus(NO_CONTENT)
+    @PreAuthorize("hasRole('PROFESSOR')")
+    @Operation(summary = "Remover vários alunos da turma",
+            description = "Alunos não matriculados são ignorados (idempotente).",
+            security = {@SecurityRequirement(name = "bearerAuth")},
+            responses = {@ApiResponse(responseCode = "204")})
+    public void removeAlunosBulk(@PathVariable Long id,
+                                  @Valid @RequestBody BulkAlunoRequestDTO request) {
+        turmaService.removeAlunosBulk(id, request);
     }
 }

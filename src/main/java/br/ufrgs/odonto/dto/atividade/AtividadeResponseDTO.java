@@ -3,6 +3,7 @@ package br.ufrgs.odonto.dto.atividade;
 import br.ufrgs.odonto.dto.turma.TurmaResumoDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +16,8 @@ public record AtividadeResponseDTO(
         String nomePaciente,
         String observacoes,
         StatusAtividade status,
+        TipoAtividade tipo,
+        String tipoDescricao,
         UserResponseDTO aluno,
         UserResponseDTO professorOrientador,
         UserResponseDTO professorTutor,

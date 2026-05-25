@@ -1,5 +1,6 @@
 package br.ufrgs.odonto.dto.atividade;
 
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -17,6 +18,11 @@ public record UpdateAtividadeRequestDTO(
         String nomePaciente,
 
         String observacoes,
+
+        TipoAtividade tipo,
+
+        @Size(max = 255)
+        String tipoDescricao,
 
         Long professorOrientadorId,
 
