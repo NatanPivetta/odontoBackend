@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -53,6 +54,17 @@ public class TurmaResource {
                                           @RequestParam(defaultValue = "name") String sort,
                                           @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
         return turmaService.findAll(PageRequest.of(page, size, Sort.by(direction, sort)));
+    }
+
+    @GetMapping("/aluno/{alunoId}")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    @Operation(summary = "Listar turmas ativas de um aluno",
+            description = "Retorna apenas as turmas em que o aluno possui matrícula ativa.",
+            security = {@SecurityRequirement(name = "bearerAuth")},
+            responses = {@ApiResponse(responseCode = "200", content = @Content(
+                    schema = @Schema(implementation = TurmaResponseDTO.class)))})
+    public List<TurmaResponseDTO> findTurmasDoAluno(@PathVariable Long alunoId) {
+        return turmaService.findTurmasDoAluno(alunoId);
     }
 
     @GetMapping("/{id}")

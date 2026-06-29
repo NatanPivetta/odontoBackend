@@ -43,6 +43,12 @@ public class TurmaService {
         return turmaMapper.toResponse(findTurmaById(id));
     }
 
+    @Transactional(readOnly = true)
+    public List<TurmaResponseDTO> findTurmasDoAluno(Long alunoId) {
+        return turmaRepository.findActiveTurmasForAlunoId(alunoId)
+                .stream().map(turmaMapper::toResponse).toList();
+    }
+
     @Transactional
     public TurmaResponseDTO create(CreateTurmaRequestDTO request) {
         Turma turma = Turma.builder()

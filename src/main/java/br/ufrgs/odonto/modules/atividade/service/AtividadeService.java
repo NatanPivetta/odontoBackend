@@ -51,7 +51,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(resolverStatus(dto.data(), dto.status()))
+                .status(resolverStatus(dto.data(), dto.status(), dto.dataConclusao()))
                 .tipo(dto.tipo())
                 .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(aluno)
@@ -80,7 +80,7 @@ public class AtividadeService {
                 .prontuario(dto.prontuario())
                 .nomePaciente(dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(resolverStatus(dto.data(), Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE)))
+                .status(resolverStatus(dto.data(), Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE), dto.dataConclusao()))
                 .tipo(dto.tipo())
                 .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(loggedUser)
@@ -220,6 +220,18 @@ public class AtividadeService {
     private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado) {
         if (data != null && data.isAfter(LocalDate.now())) {
             return StatusAtividade.PENDENTE;
+        }
+        return statusSolicitado;
+    }
+
+    private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado, LocalDate dataConclusao) {
+        if (data != null && data.isAfter(LocalDate.now())) {
+            return StatusAtividade.PENDENTE;
+        }
+        if (dataConclusao != null
+                && statusSolicitado != StatusAtividade.ALTA
+                && statusSolicitado != StatusAtividade.CONCLUIDA) {
+            return StatusAtividade.CONCLUIDA;
         }
         return statusSolicitado;
     }
