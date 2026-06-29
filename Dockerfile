@@ -30,7 +30,8 @@ USER odonto
 # Copia apenas o jar gerado
 COPY --from=builder /app/target/*.jar app.jar
 
-EXPOSE 8080
+# A aplicação escuta na porta 8090 (ver server.port em application.yml)
+EXPOSE 8090
 
 ENTRYPOINT ["java", \
   "-XX:+UseContainerSupport", \

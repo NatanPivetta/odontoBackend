@@ -183,6 +183,9 @@ public class AtividadeService {
         if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
             throw new ResourceNotFoundException("Atividade não encontrada: " + id);
         }
+        if (atividade.getStatus() == StatusAtividade.ALTA && dto.status() != StatusAtividade.ALTA) {
+            throw new BusinessException("Atividade com alta registrada não pode ter o status alterado");
+        }
         if (dto.status() == StatusAtividade.ALTA) {
             if (loggedUser.getRole() != Role.PROFESSOR) {
                 throw new BusinessException("Apenas professores podem registrar a alta do paciente");

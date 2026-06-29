@@ -76,14 +76,15 @@ public class TurmaService {
     @Transactional
     public TurmaResponseDTO addAluno(Long turmaId, Long alunoId) {
         Turma turma = findTurmaById(turmaId);
+        validarTurmaAberta(turma);
         User aluno = findAlunoById(alunoId);
 
-        if (turmaAlunoRepository.findByTurmaAndAluno(turma, aluno).isPresent()) {
+        if (matriculaAtivaExiste(turma, aluno)) {
             throw new BusinessException("Aluno já matriculado nesta turma");
         }
 
         desativarMatriculasAtivas(aluno);
-        matricular(turma, aluno);
+        matricularOuReativar(turma, aluno);
 
         return turmaMapper.toResponse(findTurmaById(turmaId));
     }
@@ -102,16 +103,17 @@ public class TurmaService {
     @Transactional
     public TurmaResponseDTO addAlunosBulk(Long turmaId, BulkAlunoRequestDTO request) {
         Turma turma = findTurmaById(turmaId);
+        validarTurmaAberta(turma);
         List<User> alunos = userRepository.findAllById(request.alunoIds());
         alunos.forEach(aluno -> {
             if (aluno.getRole() != Role.ALUNO) {
                 throw new BusinessException("Usuário " + aluno.getId() + " não possui o papel de ALUNO");
             }
-            if (turmaAlunoRepository.findByTurmaAndAluno(turma, aluno).isPresent()) {
-                return; // idempotente: já matriculado nesta turma, ignora
+            if (matriculaAtivaExiste(turma, aluno)) {
+                return; // idempotente: já matriculado e ativo nesta turma, ignora
             }
             desativarMatriculasAtivas(aluno);
-            matricular(turma, aluno);
+            matricularOuReativar(turma, aluno);
         });
         return turmaMapper.toResponse(findTurmaById(turmaId));
     }
@@ -132,12 +134,26 @@ public class TurmaService {
         turmaAlunoRepository.saveAll(ativas);
     }
 
-    private void matricular(Turma turma, User aluno) {
-        TurmaAluno matricula = TurmaAluno.builder()
-                .id(new TurmaAlunoId(turma.getId(), aluno.getId()))
-                .turma(turma)
-                .aluno(aluno)
-                .build();
+    private void validarTurmaAberta(Turma turma) {
+        if (!turma.isActive()) {
+            throw new BusinessException("Não é possível matricular alunos em uma turma encerrada");
+        }
+    }
+
+    private boolean matriculaAtivaExiste(Turma turma, User aluno) {
+        return turmaAlunoRepository.findByTurmaAndAluno(turma, aluno)
+                .filter(TurmaAluno::isActive)
+                .isPresent();
+    }
+
+    private void matricularOuReativar(Turma turma, User aluno) {
+        TurmaAluno matricula = turmaAlunoRepository.findByTurmaAndAluno(turma, aluno)
+                .orElseGet(() -> TurmaAluno.builder()
+                        .id(new TurmaAlunoId(turma.getId(), aluno.getId()))
+                        .turma(turma)
+                        .aluno(aluno)
+                        .build());
+        matricula.setActive(true);
         turmaAlunoRepository.save(matricula);
     }
 
