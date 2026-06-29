@@ -38,4 +38,12 @@ build/
 aws terraform deploy/
 docs/superpowers/plans/
 
+# env files — ignore todas as variantes com valores reais
+.env
+.env.*
+!.env.example
+
+# perfil local com credenciais de dev (não versionar)
+src/main/resources/application-local.yml
+
 odontoBackend.zip

@@ -69,8 +69,11 @@ server:
     include-stacktrace: never
 
 # ── JWT ───────────────────────────────────────────────────────
+# O JWT_SECRET DEVE ser definido por variável de ambiente em qualquer ambiente real
+# (HS512 exige >= 64 bytes — gere com: openssl rand -base64 64).
+# O default abaixo é INSEGURO e serve apenas para rodar localmente sem configurar nada.
 jwt:
-  secret: ${JWT_SECRET:bzj8uj6rVyned4cHiTIh0MgVOOdcKnA3F8hfrti8yrCNMyJJqtoFF677draKF6+VAw1TEqNUsxMg9T166nyiKw==bzj8uj6rVyned4cHiTIh0MgVOOdcKnA3F8hfrti8yrCNMyJJqtoFF677draKF6+VAw1TEqNUsxMg9T166nyiKw==}
+  secret: ${JWT_SECRET:local-dev-insecure-jwt-secret-do-not-use-in-production-override-via-env-0000000000}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 # ── Actuator ──────────────────────────────────────────────────
