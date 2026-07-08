@@ -3,6 +3,7 @@ package br.ufrgs.odonto.modules.atividade.service;
 import br.ufrgs.odonto.dto.atividade.CreateFeedbackRequestDTO;
 import br.ufrgs.odonto.dto.atividade.FeedbackResponseDTO;
 import br.ufrgs.odonto.enums.Role;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import br.ufrgs.odonto.modules.atividade.entity.Feedback;
@@ -28,7 +29,7 @@ public class FeedbackService {
     public List<FeedbackResponseDTO> findAll(Long atividadeId, User loggedUser) {
         Atividade atividade = findAtividadeById(atividadeId);
         if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
-            throw new ResourceNotFoundException("Atividade não encontrada: " + atividadeId);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, atividadeId);
         }
         return feedbackRepository.findByAtividadeId(atividadeId).stream()
                 .map(feedbackMapper::toResponse)
@@ -51,15 +52,15 @@ public class FeedbackService {
     @Transactional
     public void delete(Long atividadeId, Long feedbackId) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feedback não encontrado: " + feedbackId));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_FEEDBACK_NOT_FOUND, feedbackId));
         if (!feedback.getAtividade().getId().equals(atividadeId)) {
-            throw new ResourceNotFoundException("Feedback não encontrado: " + feedbackId);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_FEEDBACK_NOT_FOUND, feedbackId);
         }
         feedbackRepository.delete(feedback);
     }
 
     private Atividade findAtividadeById(Long id) {
         return atividadeRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id));
     }
 }

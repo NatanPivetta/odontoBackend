@@ -7,6 +7,7 @@ import br.ufrgs.odonto.dto.auth.RegisterRequestDTO;
 import br.ufrgs.odonto.dto.auth.SendVerificationCodeRequestDTO;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.modules.core.entity.EmailVerificationCode;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.EmailVerificationCodeRepository;
@@ -45,10 +46,10 @@ public class AuthService {
     @Transactional
     public void sendVerificationCode(SendVerificationCodeRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("E-mail já cadastrado. Use a tela de login.");
+            throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
         if (userRepository.existsByCardNumber(request.cardNumber())) {
-            throw new BusinessException("Número de cartão já cadastrado. Use a tela de login.");
+            throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
         verificationCodeRepository.deleteByEmail(request.email());
@@ -70,23 +71,23 @@ public class AuthService {
     public LoginResponseDTO register(RegisterRequestDTO request) {
         EmailVerificationCode verification = verificationCodeRepository
                 .findTopByEmailOrderByCreatedAtDesc(request.email())
-                .orElseThrow(() -> new BusinessException("Código não encontrado. Solicite um novo código."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ERROR_VERIFICATION_CODE_NOT_FOUND));
 
         if (verification.isUsed()) {
-            throw new BusinessException("Este código já foi utilizado. Solicite um novo código.");
+            throw new BusinessException(ErrorCode.ERROR_VERIFICATION_CODE_USED);
         }
         if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("Código expirado. Solicite um novo código.");
+            throw new BusinessException(ErrorCode.ERROR_VERIFICATION_CODE_EXPIRED);
         }
         if (!verification.getCode().equals(request.code())) {
-            throw new BusinessException("Código incorreto.");
+            throw new BusinessException(ErrorCode.ERROR_VERIFICATION_CODE_INVALID);
         }
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("E-mail já cadastrado.");
+            throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
         if (userRepository.existsByCardNumber(request.cardNumber())) {
-            throw new BusinessException("Número de cartão já cadastrado.");
+            throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
         verification.setUsed(true);

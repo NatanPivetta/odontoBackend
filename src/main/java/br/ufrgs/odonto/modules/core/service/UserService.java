@@ -4,6 +4,7 @@ import br.ufrgs.odonto.dto.user.CreateUserRequestDTO;
 import br.ufrgs.odonto.dto.user.UpdateUserRequestDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.mapper.UserMapper;
@@ -35,10 +36,10 @@ public class UserService {
     @Transactional
     public UserResponseDTO create(CreateUserRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("E-mail já cadastrado: " + request.email());
+            throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
         if (userRepository.existsByCardNumber(request.cardNumber())) {
-            throw new BusinessException("Número de cartão já cadastrado: " + request.cardNumber());
+            throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
         User user = User.builder()
@@ -58,7 +59,7 @@ public class UserService {
 
         if (request.email() != null && !request.email().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
-                throw new BusinessException("E-mail já cadastrado: " + request.email());
+                throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
             }
             user.setEmail(request.email());
         }
@@ -84,6 +85,6 @@ public class UserService {
 
     private User findUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_USER_NOT_FOUND, id));
     }
 }

@@ -3,6 +3,7 @@ package br.ufrgs.odonto.modules.atividade.service;
 import br.ufrgs.odonto.dto.atividade.*;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
@@ -36,7 +37,7 @@ public class AtividadeService {
     public AtividadeResponseDTO create(CreateAtividadeRequestDTO dto) {
         User aluno = findUserById(dto.alunoId());
         if (aluno.getRole() != Role.ALUNO) {
-            throw new BusinessException("O usuário informado não possui o perfil de aluno");
+            throw new BusinessException(ErrorCode.ERROR_USER_NOT_STUDENT);
         }
         validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
         validarDataConclusao(dto.dataConclusao());
@@ -71,7 +72,7 @@ public class AtividadeService {
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = turmaRepository.findActiveTurmaForAluno(loggedUser)
-                .orElseThrow(() -> new BusinessException("Aluno não possui turma ativa no semestre atual"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ERROR_STUDENT_WITHOUT_ACTIVE_TURMA));
         Atividade atividadePai = dto.atividadePaiId() != null ? findAtividadeById(dto.atividadePaiId()) : null;
 
         Atividade atividade = Atividade.builder()
@@ -121,7 +122,7 @@ public class AtividadeService {
     public AtividadeResponseDTO findById(Long id, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
         if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
-            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
         }
         return atividadeMapper.toResponse(atividade);
     }
@@ -156,7 +157,7 @@ public class AtividadeService {
         Atividade atividade = findAtividadeById(id);
 
         if (!atividade.getAluno().getId().equals(loggedUser.getId())) {
-            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
         }
 
         if (dto.dataConclusao() != null)   validarDataConclusao(dto.dataConclusao());
@@ -181,17 +182,17 @@ public class AtividadeService {
     public AtividadeResponseDTO updateStatus(Long id, UpdateStatusAtividadeRequestDTO dto, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
         if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
-            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
         }
         if (atividade.getStatus() == StatusAtividade.ALTA && dto.status() != StatusAtividade.ALTA) {
-            throw new BusinessException("Atividade com alta registrada não pode ter o status alterado");
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_IMMUTABLE);
         }
         if (dto.status() == StatusAtividade.ALTA) {
             if (loggedUser.getRole() != Role.PROFESSOR) {
-                throw new BusinessException("Apenas professores podem registrar a alta do paciente");
+                throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_PROFESSOR_ONLY);
             }
             if (atividade.getStatus() != StatusAtividade.CONCLUIDA) {
-                throw new BusinessException("A alta só pode ser registrada em atividades com status CONCLUIDA");
+                throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_REQUIRES_CONCLUIDA);
             }
         }
         atividade.setStatus(dto.status());
@@ -207,13 +208,13 @@ public class AtividadeService {
 
     private void validarTipoDescricao(TipoAtividade tipo, String tipoDescricao) {
         if (tipo == TipoAtividade.OUTROS && (tipoDescricao == null || tipoDescricao.isBlank())) {
-            throw new BusinessException("Campo 'tipoDescricao' é obrigatório quando o tipo for OUTROS");
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_TYPE_DESCRIPTION_REQUIRED);
         }
     }
 
     private void validarDataConclusao(LocalDate dataConclusao) {
         if (dataConclusao != null && dataConclusao.isAfter(LocalDate.now())) {
-            throw new BusinessException("A data de conclusão não pode ser uma data futura");
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_COMPLETION_DATE_FUTURE);
         }
     }
 
@@ -238,16 +239,16 @@ public class AtividadeService {
 
     private Atividade findAtividadeById(Long id) {
         return atividadeRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id));
     }
 
     private User findUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_USER_NOT_FOUND, id));
     }
 
     private Turma findTurmaById(Long id) {
         return turmaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Turma não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_TURMA_NOT_FOUND, id));
     }
 }

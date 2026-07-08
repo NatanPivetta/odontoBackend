@@ -5,6 +5,7 @@ import br.ufrgs.odonto.dto.user.UpdateProfessorRequestDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.mapper.UserMapper;
@@ -42,10 +43,10 @@ public class ProfessorService {
     @Transactional
     public UserResponseDTO create(CreateProfessorRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("E-mail já cadastrado: " + request.email());
+            throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
         if (userRepository.existsByCardNumber(request.cardNumber())) {
-            throw new BusinessException("Número de cartão já cadastrado: " + request.cardNumber());
+            throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
         User professor = User.builder()
@@ -65,7 +66,7 @@ public class ProfessorService {
 
         if (request.email() != null && !request.email().equals(professor.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
-                throw new BusinessException("E-mail já cadastrado: " + request.email());
+                throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
             }
             professor.setEmail(request.email());
         }
@@ -88,9 +89,9 @@ public class ProfessorService {
 
     private User findProfessorById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Professor não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_USER_NOT_FOUND, id));
         if (user.getRole() != Role.PROFESSOR) {
-            throw new BusinessException("O usuário informado não possui o papel de PROFESSOR");
+            throw new BusinessException(ErrorCode.ERROR_USER_NOT_PROFESSOR);
         }
         return user;
     }

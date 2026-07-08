@@ -6,6 +6,7 @@ import br.ufrgs.odonto.dto.turma.TurmaResponseDTO;
 import br.ufrgs.odonto.dto.turma.UpdateTurmaRequestDTO;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
@@ -86,7 +87,7 @@ public class TurmaService {
         User aluno = findAlunoById(alunoId);
 
         if (matriculaAtivaExiste(turma, aluno)) {
-            throw new BusinessException("Aluno já matriculado nesta turma");
+            throw new BusinessException(ErrorCode.ERROR_STUDENT_ALREADY_ENROLLED);
         }
 
         desativarMatriculasAtivas(aluno);
@@ -101,7 +102,7 @@ public class TurmaService {
         User aluno = findAlunoById(alunoId);
 
         TurmaAluno matricula = turmaAlunoRepository.findByTurmaAndAluno(turma, aluno)
-                .orElseThrow(() -> new BusinessException("Aluno não está matriculado nesta turma"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ERROR_STUDENT_NOT_ENROLLED));
 
         turmaAlunoRepository.delete(matricula);
     }
@@ -113,7 +114,7 @@ public class TurmaService {
         List<User> alunos = userRepository.findAllById(request.alunoIds());
         alunos.forEach(aluno -> {
             if (aluno.getRole() != Role.ALUNO) {
-                throw new BusinessException("Usuário " + aluno.getId() + " não possui o papel de ALUNO");
+                throw new BusinessException(ErrorCode.ERROR_USER_NOT_STUDENT);
             }
             if (matriculaAtivaExiste(turma, aluno)) {
                 return; // idempotente: já matriculado e ativo nesta turma, ignora
@@ -142,7 +143,7 @@ public class TurmaService {
 
     private void validarTurmaAberta(Turma turma) {
         if (!turma.isActive()) {
-            throw new BusinessException("Não é possível matricular alunos em uma turma encerrada");
+            throw new BusinessException(ErrorCode.ERROR_TURMA_CLOSED_ENROLLMENT);
         }
     }
 
@@ -165,15 +166,15 @@ public class TurmaService {
 
     private Turma findTurmaById(Long id) {
         return turmaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Turma não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_TURMA_NOT_FOUND, id));
     }
 
     private User findAlunoById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_USER_NOT_FOUND, id));
 
         if (user.getRole() != Role.ALUNO) {
-            throw new BusinessException("O usuário informado não possui o papel de ALUNO");
+            throw new BusinessException(ErrorCode.ERROR_USER_NOT_STUDENT);
         }
 
         return user;
