@@ -30,7 +30,7 @@ public class User extends Auditable<String> implements UserDetails {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "card_number", nullable = false, unique = true, length = 9)
+    @Column(name = "card_number", nullable = false, unique = true, length = 8)
     private String cardNumber;
 
     @Column(name = "password_hash", nullable = false)

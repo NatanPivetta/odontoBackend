@@ -1,6 +1,9 @@
 package br.ufrgs.odonto.dto.auth;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record RegisterRequestDTO(
 
@@ -14,14 +17,15 @@ public record RegisterRequestDTO(
         String email,
 
         @NotBlank
-        @Size(min = 9, max = 9, message = "O número do cartão deve ter exatamente 9 caracteres")
+        @Size(max = 8, message = "O numero do cartao deve ter no maximo 8 caracteres")
+        @Pattern(regexp = "\\d+", message = "O numero do cartao deve conter apenas digitos")
         String cardNumber,
 
         @NotBlank
-        @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres")
+        @Size(min = 8, message = "A senha deve ter no minimo 8 caracteres")
         String password,
 
         @NotBlank
-        @Size(min = 6, max = 6, message = "O código deve ter exatamente 6 dígitos")
+        @Size(min = 6, max = 6, message = "O codigo deve ter exatamente 6 digitos")
         String code
 ) {}

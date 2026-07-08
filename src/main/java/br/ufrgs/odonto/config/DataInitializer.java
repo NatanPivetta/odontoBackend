@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
-    private static final String DEFAULT_CARD_NUMBER = "000000001";
+    private static final String DEFAULT_CARD_NUMBER = "00000001";
     private static final String DEFAULT_PASSWORD    = "Admin@123";
 
     private final UserRepository userRepository;

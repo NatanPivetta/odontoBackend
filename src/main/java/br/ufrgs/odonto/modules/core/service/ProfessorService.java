@@ -24,6 +24,7 @@ public class ProfessorService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CardNumberNormalizer cardNumberNormalizer;
 
     @Transactional(readOnly = true)
     public Page<UserResponseDTO> findAll(Boolean active, Pageable pageable) {
@@ -42,17 +43,18 @@ public class ProfessorService {
 
     @Transactional
     public UserResponseDTO create(CreateProfessorRequestDTO request) {
+        String cardNumber = cardNumberNormalizer.normalize(request.cardNumber());
         if (userRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
-        if (userRepository.existsByCardNumber(request.cardNumber())) {
+        if (userRepository.existsByCardNumber(cardNumber)) {
             throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
         User professor = User.builder()
                 .name(request.name())
                 .email(request.email())
-                .cardNumber(request.cardNumber())
+                .cardNumber(cardNumber)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(Role.PROFESSOR)
                 .build();

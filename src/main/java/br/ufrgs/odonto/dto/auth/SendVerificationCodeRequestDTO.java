@@ -1,6 +1,9 @@
 package br.ufrgs.odonto.dto.auth;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record SendVerificationCodeRequestDTO(
 
@@ -14,6 +17,7 @@ public record SendVerificationCodeRequestDTO(
         String email,
 
         @NotBlank
-        @Size(min = 9, max = 9, message = "O número do cartão deve ter exatamente 9 caracteres")
+        @Size(max = 8, message = "O numero do cartao deve ter no maximo 8 caracteres")
+        @Pattern(regexp = "\\d+", message = "O numero do cartao deve conter apenas digitos")
         String cardNumber
 ) {}

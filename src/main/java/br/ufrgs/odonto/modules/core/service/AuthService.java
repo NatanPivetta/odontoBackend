@@ -33,10 +33,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationCodeRepository verificationCodeRepository;
     private final EmailService emailService;
+    private final CardNumberNormalizer cardNumberNormalizer;
 
     public LoginResponseDTO login(LoginRequestDTO request) {
+        String cardNumber = cardNumberNormalizer.normalize(request.cardNumber());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.cardNumber(), request.password())
+                new UsernamePasswordAuthenticationToken(cardNumber, request.password())
         );
         User user = (User) authentication.getPrincipal();
         String token = jwtService.generateToken(user.getCardNumber(), user.getRole().name());
@@ -45,10 +47,11 @@ public class AuthService {
 
     @Transactional
     public void sendVerificationCode(SendVerificationCodeRequestDTO request) {
+        String cardNumber = cardNumberNormalizer.normalize(request.cardNumber());
         if (userRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
-        if (userRepository.existsByCardNumber(request.cardNumber())) {
+        if (userRepository.existsByCardNumber(cardNumber)) {
             throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
@@ -69,6 +72,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponseDTO register(RegisterRequestDTO request) {
+        String cardNumber = cardNumberNormalizer.normalize(request.cardNumber());
         EmailVerificationCode verification = verificationCodeRepository
                 .findTopByEmailOrderByCreatedAtDesc(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ERROR_VERIFICATION_CODE_NOT_FOUND));
@@ -86,7 +90,7 @@ public class AuthService {
         if (userRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.ERROR_EMAIL_ALREADY_REGISTERED);
         }
-        if (userRepository.existsByCardNumber(request.cardNumber())) {
+        if (userRepository.existsByCardNumber(cardNumber)) {
             throw new BusinessException(ErrorCode.ERROR_CARD_NUMBER_ALREADY_REGISTERED);
         }
 
@@ -96,7 +100,7 @@ public class AuthService {
         User user = User.builder()
                 .name(request.name())
                 .email(request.email())
-                .cardNumber(request.cardNumber())
+                .cardNumber(cardNumber)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(Role.ALUNO)
                 .build();
