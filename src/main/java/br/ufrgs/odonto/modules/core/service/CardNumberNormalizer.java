@@ -14,7 +14,7 @@ public class CardNumberNormalizer {
 
         String digits = cardNumber.replaceAll("\\D", "");
         if (digits.length() > CARD_NUMBER_LENGTH) {
-            return digits;
+            return digits.substring(digits.length() - CARD_NUMBER_LENGTH);
         }
 
         return "0".repeat(CARD_NUMBER_LENGTH - digits.length()) + digits;

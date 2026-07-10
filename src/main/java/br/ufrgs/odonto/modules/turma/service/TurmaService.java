@@ -2,6 +2,7 @@ package br.ufrgs.odonto.modules.turma.service;
 
 import br.ufrgs.odonto.dto.turma.BulkAlunoRequestDTO;
 import br.ufrgs.odonto.dto.turma.CreateTurmaRequestDTO;
+import br.ufrgs.odonto.dto.turma.DisciplinaClinicaDTO;
 import br.ufrgs.odonto.dto.turma.TurmaResponseDTO;
 import br.ufrgs.odonto.dto.turma.UpdateTurmaRequestDTO;
 import br.ufrgs.odonto.enums.Role;
@@ -10,6 +11,7 @@ import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
+import br.ufrgs.odonto.modules.turma.entity.DisciplinaClinica;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
 import br.ufrgs.odonto.modules.turma.entity.TurmaAluno;
 import br.ufrgs.odonto.modules.turma.entity.TurmaAlunoId;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Arrays;
 
 
 @Service
@@ -40,6 +43,13 @@ public class TurmaService {
     }
 
     @Transactional(readOnly = true)
+    public List<DisciplinaClinicaDTO> findDisciplinas() {
+        return Arrays.stream(DisciplinaClinica.values())
+                .map(DisciplinaClinicaDTO::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public TurmaResponseDTO findById(Long id) {
         return turmaMapper.toResponse(findTurmaById(id));
     }
@@ -54,6 +64,7 @@ public class TurmaService {
     public TurmaResponseDTO create(CreateTurmaRequestDTO request) {
         Turma turma = Turma.builder()
                 .disciplina(request.disciplina())
+                .codigoTurma(request.codigoTurma())
                 .name(request.name())
                 .semester(request.semester())
                 .build();
@@ -66,6 +77,7 @@ public class TurmaService {
         Turma turma = findTurmaById(id);
 
         if (request.disciplina() != null) turma.setDisciplina(request.disciplina());
+        if (request.codigoTurma() != null) turma.setCodigoTurma(request.codigoTurma());
         if (request.name() != null)       turma.setName(request.name());
         if (request.semester() != null)   turma.setSemester(request.semester());
         if (request.active() != null)     turma.setActive(request.active());

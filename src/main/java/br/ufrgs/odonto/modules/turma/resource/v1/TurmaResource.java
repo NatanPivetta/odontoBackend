@@ -2,6 +2,7 @@ package br.ufrgs.odonto.modules.turma.resource.v1;
 
 import br.ufrgs.odonto.dto.turma.BulkAlunoRequestDTO;
 import br.ufrgs.odonto.dto.turma.CreateTurmaRequestDTO;
+import br.ufrgs.odonto.dto.turma.DisciplinaClinicaDTO;
 import br.ufrgs.odonto.dto.turma.TurmaResponseDTO;
 import br.ufrgs.odonto.dto.turma.UpdateTurmaRequestDTO;
 import br.ufrgs.odonto.modules.turma.service.TurmaService;
@@ -31,6 +32,16 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 public class TurmaResource {
 
     private final TurmaService turmaService;
+
+    @GetMapping("/disciplinas")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    @Operation(summary = "Listar disciplinas clinicas disponiveis",
+            security = {@SecurityRequirement(name = "bearerAuth")},
+            responses = {@ApiResponse(responseCode = "200", content = @Content(
+                    schema = @Schema(implementation = DisciplinaClinicaDTO.class)))})
+    public List<DisciplinaClinicaDTO> findDisciplinas() {
+        return turmaService.findDisciplinas();
+    }
 
     @PostMapping
     @ResponseStatus(CREATED)
