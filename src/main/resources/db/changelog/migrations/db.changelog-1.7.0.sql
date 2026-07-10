@@ -10,6 +10,9 @@ SET codigo_turma = COALESCE(NULLIF(TRIM(codigo_turma), ''), LEFT(TRIM(disciplina
 WHERE codigo_turma IS NULL OR TRIM(codigo_turma) = '';
 
 -- changeset natan.pivetta:20260710-7-3
+ALTER TABLE turmas
+    ALTER COLUMN disciplina TYPE VARCHAR(40);
+
 UPDATE turmas
 SET disciplina = CASE
     WHEN UPPER(TRIM(disciplina)) IN ('CLINICA_ODONTOLOGICA_I', 'ODO99012', 'CLINICA ODONTOLOGICA I', 'CLÍNICA ODONTOLÓGICA I') THEN 'CLINICA_ODONTOLOGICA_I'
@@ -21,8 +24,7 @@ END;
 
 -- changeset natan.pivetta:20260710-7-4
 ALTER TABLE turmas
-    ALTER COLUMN codigo_turma SET NOT NULL,
-    ALTER COLUMN disciplina TYPE VARCHAR(40);
+    ALTER COLUMN codigo_turma SET NOT NULL;
 
 -- changeset natan.pivetta:20260710-7-5
 ALTER TABLE turmas
