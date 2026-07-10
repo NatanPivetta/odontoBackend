@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum DisciplinaClinica {
-    ODO99012("CLINICA_ODONTOLOGICA_I"),
-    ODO99013("CLINICA_ODONTOLOGICA_II"),
-    ODO99014("CLINICA_ODONTOLOGICA_III"),
-    ODO99016("CLINICA_ODONTOLOGICA_IV");
+    ODO99012("CLÍNICA ODONTOLÓGICA I"),
+    ODO99013("CLÍNICA ODONTOLÓGICA II"),
+    ODO99014("CLÍNICA ODONTOLÓGICA III"),
+    ODO99016("CLÍNICA ODONTOLÓGICA IV");
 
     private final String nome;
 
