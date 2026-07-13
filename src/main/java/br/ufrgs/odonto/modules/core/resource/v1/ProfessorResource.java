@@ -31,7 +31,7 @@ public class ProfessorResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Criar professor",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -41,7 +41,7 @@ public class ProfessorResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAuthority('PROFESSOR_VIEW')")
     @Operation(
             summary = "Listar professores",
             description = "Retorna todos os usuários com papel PROFESSOR. Use o parâmetro `active` para filtrar por status.",
@@ -58,7 +58,7 @@ public class ProfessorResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAuthority('PROFESSOR_VIEW')")
     @Operation(summary = "Buscar professor por ID",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -68,7 +68,7 @@ public class ProfessorResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Atualizar professor",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -80,7 +80,7 @@ public class ProfessorResource {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Desativar professor",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})

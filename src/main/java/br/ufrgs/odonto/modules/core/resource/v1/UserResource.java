@@ -32,7 +32,7 @@ public class UserResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Criar usuário",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -42,7 +42,7 @@ public class UserResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     @Operation(summary = "Listar usuários",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -55,7 +55,7 @@ public class UserResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     @Operation(summary = "Buscar usuário por ID",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -65,7 +65,7 @@ public class UserResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Atualizar usuário",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -77,7 +77,7 @@ public class UserResource {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
     @Operation(summary = "Desativar usuário",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})

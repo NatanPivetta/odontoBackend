@@ -24,7 +24,7 @@ public class AlunoResource {
     private final AlunoService alunoService;
 
     @GetMapping
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('STUDENT_VIEW')")
     @Operation(
             summary = "Listar alunos",
             description = "Retorna todos os usuários com papel ALUNO. Use o parâmetro `active` para filtrar por status.",

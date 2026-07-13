@@ -33,7 +33,7 @@ public class AtividadeResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_CREATE')")
     @Operation(summary = "Criar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -44,7 +44,7 @@ public class AtividadeResource {
 
     @PostMapping("/aluno")
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_CREATE')")
     @Operation(summary = "Criar atividade (aluno)",
             description = "Turma inferida automaticamente da matrícula ativa do aluno.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -56,7 +56,7 @@ public class AtividadeResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_VIEW_ANY')")
     @Operation(summary = "Listar atividades (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -79,7 +79,7 @@ public class AtividadeResource {
     }
 
     @GetMapping("/minhas")
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_VIEW_OWN')")
     @Operation(summary = "Listar minhas atividades (aluno)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -96,7 +96,7 @@ public class AtividadeResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAnyAuthority('ACTIVITY_VIEW_ANY', 'ACTIVITY_VIEW_OWN')")
     @Operation(summary = "Buscar atividade por ID",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -107,7 +107,7 @@ public class AtividadeResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_ANY')")
     @Operation(summary = "Atualizar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -118,7 +118,7 @@ public class AtividadeResource {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_OWN')")
     @Operation(summary = "Atualizar dados básicos da atividade (aluno)",
             description = "Aluno pode atualizar apenas data, dataConclusão, prontuário, nome do paciente e observações.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -131,7 +131,7 @@ public class AtividadeResource {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAnyAuthority('ACTIVITY_UPDATE_ANY', 'ACTIVITY_UPDATE_OWN')")
     @Operation(summary = "Atualizar status da atividade",
             description = "Professor pode atualizar qualquer atividade. Aluno pode atualizar apenas as próprias.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -145,7 +145,7 @@ public class AtividadeResource {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_ANY')")
     @Operation(summary = "Desativar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})

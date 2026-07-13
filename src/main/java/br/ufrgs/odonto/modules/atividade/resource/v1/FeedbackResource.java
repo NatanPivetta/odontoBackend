@@ -30,7 +30,7 @@ public class FeedbackResource {
     private final FeedbackService feedbackService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAnyAuthority('FEEDBACK_VIEW_ANY', 'FEEDBACK_VIEW_OWN')")
     @Operation(summary = "Listar feedbacks da atividade",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -42,7 +42,7 @@ public class FeedbackResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('FEEDBACK_CREATE')")
     @Operation(summary = "Adicionar feedback à atividade",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -55,7 +55,7 @@ public class FeedbackResource {
 
     @DeleteMapping("/{feedbackId}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('FEEDBACK_CREATE')")
     @Operation(summary = "Remover feedback da atividade",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})

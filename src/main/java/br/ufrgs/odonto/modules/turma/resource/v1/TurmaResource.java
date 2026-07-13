@@ -34,7 +34,7 @@ public class TurmaResource {
     private final TurmaService turmaService;
 
     @GetMapping("/disciplinas")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_VIEW')")
     @Operation(summary = "Listar disciplinas clinicas disponiveis",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -45,7 +45,7 @@ public class TurmaResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Criar turma",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -55,7 +55,7 @@ public class TurmaResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_VIEW')")
     @Operation(summary = "Listar turmas",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -68,7 +68,7 @@ public class TurmaResource {
     }
 
     @GetMapping("/aluno/{alunoId}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_VIEW')")
     @Operation(summary = "Listar turmas ativas de um aluno",
             description = "Retorna apenas as turmas em que o aluno possui matrícula ativa.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -79,7 +79,7 @@ public class TurmaResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_VIEW')")
     @Operation(summary = "Buscar turma por ID",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -89,7 +89,7 @@ public class TurmaResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Atualizar turma",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -101,7 +101,7 @@ public class TurmaResource {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Desativar turma",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})
@@ -110,7 +110,7 @@ public class TurmaResource {
     }
 
     @PostMapping("/{id}/alunos/{alunoId}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Matricular aluno na turma",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -121,7 +121,7 @@ public class TurmaResource {
 
     @DeleteMapping("/{id}/alunos/{alunoId}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Remover aluno da turma",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})
@@ -130,7 +130,7 @@ public class TurmaResource {
     }
 
     @PostMapping("/{id}/alunos/bulk")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Matricular vários alunos na turma",
             description = "Alunos já matriculados são ignorados (idempotente).",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -143,7 +143,7 @@ public class TurmaResource {
 
     @DeleteMapping("/{id}/alunos/bulk")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('CLASS_MANAGE')")
     @Operation(summary = "Remover vários alunos da turma",
             description = "Alunos não matriculados são ignorados (idempotente).",
             security = {@SecurityRequirement(name = "bearerAuth")},
