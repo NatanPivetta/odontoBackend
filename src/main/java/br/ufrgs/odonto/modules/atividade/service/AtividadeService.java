@@ -111,10 +111,11 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser, TipoAtividade tipo) {
+    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser, TipoAtividade tipo, StatusAtividade status) {
         Specification<Atividade> spec = Specification.where(AtividadeSpecification.isActive())
                 .and(AtividadeSpecification.byAlunoId(loggedUser.getId()));
         if (tipo != null) spec = spec.and(AtividadeSpecification.byTipo(tipo));
+        if (status != null) spec = spec.and(AtividadeSpecification.byStatus(status));
         return atividadeRepository.findAll(spec, pageable).map(atividadeMapper::toResponse);
     }
 

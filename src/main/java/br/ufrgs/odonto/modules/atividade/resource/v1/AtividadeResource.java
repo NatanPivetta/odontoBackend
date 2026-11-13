@@ -86,13 +86,14 @@ public class AtividadeResource {
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})
     public Page<AtividadeResponseDTO> findMinhas(
             @RequestParam(required = false) TipoAtividade tipo,
+            @RequestParam(required = false) StatusAtividade status,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(defaultValue = "data") String sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @AuthenticationPrincipal User loggedUser) {
         return atividadeService.findMinhas(
-                PageRequest.of(page, size, Sort.by(direction, sort)), loggedUser, tipo);
+                PageRequest.of(page, size, Sort.by(direction, sort)), loggedUser, tipo, status);
     }
 
     @GetMapping("/{id}")
