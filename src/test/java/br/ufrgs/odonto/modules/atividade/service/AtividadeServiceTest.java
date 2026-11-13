@@ -399,4 +399,35 @@ class AtividadeServiceTest {
         assertThatThrownBy(() -> atividadeService.update(999L, dto))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    @Test
+    void createFilha_deveHerdarPacienteDaAtividadePai() {
+        atividade.setNomePaciente("Paciente original");
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), null, "ABC123", "Paciente diferente", null,
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, 100L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        atividadeService.create(dto);
+        verify(atividadeRepository).save(argThat(a ->
+                "Paciente original".equals(a.getNomePaciente()) && a.getAtividadePai() == atividade));
+    }
+
+    @Test
+    void createFilhaAsAluno_deveHerdarPacienteDaAtividadePai() {
+        atividade.setNomePaciente("Paciente original");
+        CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
+                LocalDate.now(), null, "ABC123", "Paciente diferente", null,
+                StatusAtividade.PENDENTE, null, null, 2L, null, 100L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findActiveTurmaForAluno(aluno)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        atividadeService.createAsAluno(dto, aluno);
+        verify(atividadeRepository).save(argThat(a ->
+                "Paciente original".equals(a.getNomePaciente()) && a.getAtividadePai() == atividade));
+    }
 }
