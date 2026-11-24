@@ -219,13 +219,6 @@ public class AtividadeService {
         }
     }
 
-    private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado) {
-        if (data != null && data.isAfter(LocalDate.now())) {
-            return StatusAtividade.PENDENTE;
-        }
-        return statusSolicitado;
-    }
-
     private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado, LocalDate dataConclusao) {
         if (data != null && data.isAfter(LocalDate.now())) {
             return StatusAtividade.PENDENTE;

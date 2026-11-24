@@ -3,9 +3,11 @@ package br.ufrgs.odonto.modules.atividade.service;
 import br.ufrgs.odonto.dto.atividade.*;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import br.ufrgs.odonto.modules.atividade.mapper.AtividadeMapper;
 import br.ufrgs.odonto.modules.atividade.repository.AtividadeRepository;
 import br.ufrgs.odonto.modules.core.entity.User;
@@ -18,6 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -100,8 +106,8 @@ class AtividadeServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
 
         assertThatThrownBy(() -> atividadeService.create(dto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("aluno");
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ERROR_USER_NOT_STUDENT));
     }
 
     @Test
@@ -146,8 +152,8 @@ class AtividadeServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.createAsAluno(dto, aluno))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("turma ativa");
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ERROR_STUDENT_WITHOUT_ACTIVE_TURMA));
     }
 
     @Test
@@ -284,8 +290,8 @@ class AtividadeServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
 
         assertThatThrownBy(() -> atividadeService.create(dto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("data de conclusão");
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ERROR_ACTIVITY_COMPLETION_DATE_FUTURE));
     }
 
     @Test
@@ -313,8 +319,8 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
         assertThatThrownBy(() -> atividadeService.updateDadosBasicos(100L, dto, aluno))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("data de conclusão");
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ERROR_ACTIVITY_COMPLETION_DATE_FUTURE));
     }
 
     @Test
@@ -325,8 +331,8 @@ class AtividadeServiceTest {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
         assertThatThrownBy(() -> atividadeService.update(100L, dto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("data de conclusão");
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ERROR_ACTIVITY_COMPLETION_DATE_FUTURE));
     }
 
     @Test
@@ -429,5 +435,115 @@ class AtividadeServiceTest {
         atividadeService.createAsAluno(dto, aluno);
         verify(atividadeRepository).save(argThat(a ->
                 "Paciente original".equals(a.getNomePaciente()) && a.getAtividadePai() == atividade));
+    }
+
+    @Test
+    void professorConcedeAltaAAtividadeConcluida() {
+        atividade.setStatus(StatusAtividade.CONCLUIDA);
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(atividade)).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        assertThat(atividadeService.updateStatus(100L,
+                new UpdateStatusAtividadeRequestDTO(StatusAtividade.ALTA), professor)).isSameAs(responseDTO);
+
+        assertThat(atividade.getStatus()).isEqualTo(StatusAtividade.ALTA);
+        verify(atividadeRepository).save(atividade);
+    }
+
+    @Test
+    void professorNaoConcedeAltaAAtividadePendente() {
+        rejeitaMudancaDeStatus(StatusAtividade.PENDENTE, StatusAtividade.ALTA, professor,
+                ErrorCode.ERROR_ACTIVITY_ALTA_REQUIRES_CONCLUIDA);
+    }
+
+    @Test
+    void alunoNaoConcedeAltaMesmoNaPropriaAtividadeConcluida() {
+        rejeitaMudancaDeStatus(StatusAtividade.CONCLUIDA, StatusAtividade.ALTA, aluno,
+                ErrorCode.ERROR_ACTIVITY_ALTA_PROFESSOR_ONLY);
+    }
+
+    @Test
+    void professorNaoPodeReverterUmaAlta() {
+        rejeitaMudancaDeStatus(StatusAtividade.ALTA, StatusAtividade.CONCLUIDA, professor,
+                ErrorCode.ERROR_ACTIVITY_ALTA_IMMUTABLE);
+    }
+
+    private void rejeitaMudancaDeStatus(StatusAtividade atual, StatusAtividade solicitado, User autor,
+                                        ErrorCode erroEsperado) {
+        atividade.setStatus(atual);
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.updateStatus(100L,
+                new UpdateStatusAtividadeRequestDTO(solicitado), autor))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(erroEsperado));
+        assertThat(atividade.getStatus()).isEqualTo(atual);
+        verify(atividadeRepository, never()).save(any(Atividade.class));
+    }
+
+    @Test
+    void alunoNaoAlteraStatusDaAtividadeDeOutroAluno() {
+        var outroAluno = User.builder().id(9L).role(Role.ALUNO).build();
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.updateStatus(100L,
+                new UpdateStatusAtividadeRequestDTO(StatusAtividade.CONCLUIDA), outroAluno))
+                .isInstanceOfSatisfying(ResourceNotFoundException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ERROR_ACTIVITY_NOT_FOUND));
+        assertThat(atividade.getStatus()).isEqualTo(StatusAtividade.PENDENTE);
+        verify(atividadeRepository, never()).save(any(Atividade.class));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    void outrosExigeDescricaoPreenchida(String descricao) {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        var request = new CreateAtividadeRequestDTO(LocalDate.now(), null, "ABC123", null, null,
+                StatusAtividade.PENDENTE, TipoAtividade.OUTROS, descricao, 1L, 2L, null, 10L, null);
+
+        assertThatThrownBy(() -> atividadeService.create(request))
+                .isInstanceOfSatisfying(BusinessException.class, ex ->
+                        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ERROR_ACTIVITY_TYPE_DESCRIPTION_REQUIRED));
+        verifyNoInteractions(atividadeRepository);
+    }
+
+    @Test
+    void atividadeDeOntemComDataDeConclusaoFicaConcluidaEPreservaDescricao() {
+        var ontem = LocalDate.now().minusDays(1);
+        var request = new CreateAtividadeRequestDTO(ontem, ontem, "ABC123", null, null,
+                StatusAtividade.PENDENTE, TipoAtividade.OUTROS, "Acompanhamento", 1L, 2L, 2L, 10L, null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+
+        atividadeService.create(request);
+
+        var captor = ArgumentCaptor.forClass(Atividade.class);
+        verify(atividadeRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(StatusAtividade.CONCLUIDA);
+        assertThat(captor.getValue().getDataConclusao()).isEqualTo(ontem);
+        assertThat(captor.getValue().getTipoDescricao()).isEqualTo("Acompanhamento");
+        assertThat(captor.getValue().getProfessorTutor()).isSameAs(professor);
+    }
+
+    @Test
+    void edicaoDoAlunoAtualizaConclusaoObservacoesTipoETutor() {
+        var ontem = LocalDate.now().minusDays(1);
+        var request = new UpdateAtividadeAlunoRequestDTO(null, ontem, null, null, "Retorno",
+                TipoAtividade.OUTROS, "Acompanhamento", 2L);
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+
+        atividadeService.updateDadosBasicos(100L, request, aluno);
+
+        assertThat(atividade.getDataConclusao()).isEqualTo(ontem);
+        assertThat(atividade.getObservacoes()).isEqualTo("Retorno");
+        assertThat(atividade.getTipo()).isEqualTo(TipoAtividade.OUTROS);
+        assertThat(atividade.getTipoDescricao()).isEqualTo("Acompanhamento");
+        assertThat(atividade.getProfessorTutor()).isSameAs(professor);
+        assertThat(atividade.getProntuario()).isEqualTo("ABC123");
+        verify(atividadeRepository).save(atividade);
     }
 }

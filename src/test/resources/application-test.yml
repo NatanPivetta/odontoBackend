@@ -1,0 +1,24 @@
+spring:
+  liquibase:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  mail:
+    host: localhost
+    port: 1025
+    username: odonto-test@example.invalid
+    password: ""
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+      mail.smtp.starttls.required: false
+
+jwt:
+  secret: odonto-test-only-jwt-signing-key-0123456789-abcdefghijklmnopqrstuvwxyz
+  expiration-ms: 3600000
+
+management:
+  health:
+    mail:
+      enabled: false
