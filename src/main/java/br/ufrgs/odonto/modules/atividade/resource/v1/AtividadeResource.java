@@ -1,6 +1,8 @@
 package br.ufrgs.odonto.modules.atividade.resource.v1;
 
 import br.ufrgs.odonto.dto.atividade.*;
+import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import br.ufrgs.odonto.modules.atividade.service.AtividadeService;
 import br.ufrgs.odonto.modules.core.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +33,7 @@ public class AtividadeResource {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_CREATE')")
     @Operation(summary = "Criar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "201", content = @Content(
@@ -42,7 +44,7 @@ public class AtividadeResource {
 
     @PostMapping("/aluno")
     @ResponseStatus(CREATED)
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_CREATE')")
     @Operation(summary = "Criar atividade (aluno)",
             description = "Turma inferida automaticamente da matrícula ativa do aluno.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -54,7 +56,7 @@ public class AtividadeResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_VIEW_ANY')")
     @Operation(summary = "Listar atividades (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -62,34 +64,41 @@ public class AtividadeResource {
     public Page<AtividadeResponseDTO> findAll(
             @RequestParam(required = false) Long alunoId,
             @RequestParam(required = false) Long turmaId,
+            @RequestParam(required = false) Long atividadePaiId,
+            @RequestParam(required = false) Long professorOrientadorId,
+            @RequestParam(required = false) Long professorTutorId,
+            @RequestParam(required = false) TipoAtividade tipo,
+            @RequestParam(required = false) StatusAtividade status,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(defaultValue = "data") String sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
         return atividadeService.findAll(
-                PageRequest.of(page, size, Sort.by(direction, sort)), alunoId, turmaId);
+                PageRequest.of(page, size, Sort.by(direction, sort)),
+                alunoId, turmaId, atividadePaiId, professorOrientadorId, professorTutorId, tipo, status);
     }
 
     @GetMapping("/minhas")
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_VIEW_OWN')")
     @Operation(summary = "Listar minhas atividades (aluno)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})
     public Page<AtividadeResponseDTO> findMinhas(
+            @RequestParam(required = false) TipoAtividade tipo,
+            @RequestParam(required = false) StatusAtividade status,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(defaultValue = "data") String sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @AuthenticationPrincipal User loggedUser) {
         return atividadeService.findMinhas(
-                PageRequest.of(page, size, Sort.by(direction, sort)), loggedUser);
+                PageRequest.of(page, size, Sort.by(direction, sort)), loggedUser, tipo, status);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PROFESSOR', 'ALUNO')")
+    @PreAuthorize("hasAnyAuthority('ACTIVITY_VIEW_ANY', 'ACTIVITY_VIEW_OWN')")
     @Operation(summary = "Buscar atividade por ID",
-            description = "Aluno não visualiza o campo feedbackPrivado.",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})
@@ -99,7 +108,7 @@ public class AtividadeResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_ANY')")
     @Operation(summary = "Atualizar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
@@ -110,7 +119,7 @@ public class AtividadeResource {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ALUNO')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_OWN')")
     @Operation(summary = "Atualizar dados básicos da atividade (aluno)",
             description = "Aluno pode atualizar apenas data, dataConclusão, prontuário, nome do paciente e observações.",
             security = {@SecurityRequirement(name = "bearerAuth")},
@@ -123,19 +132,21 @@ public class AtividadeResource {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('PROFESSOR')")
-    @Operation(summary = "Atualizar status da atividade (professor)",
+    @PreAuthorize("hasAnyAuthority('ACTIVITY_UPDATE_ANY', 'ACTIVITY_UPDATE_OWN')")
+    @Operation(summary = "Atualizar status da atividade",
+            description = "Professor pode atualizar qualquer atividade. Aluno pode atualizar apenas as próprias.",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "200", content = @Content(
                     schema = @Schema(implementation = AtividadeResponseDTO.class)))})
     public AtividadeResponseDTO updateStatus(@PathVariable Long id,
-                                              @Valid @RequestBody UpdateStatusAtividadeRequestDTO request) {
-        return atividadeService.updateStatus(id, request);
+                                              @Valid @RequestBody UpdateStatusAtividadeRequestDTO request,
+                                              @AuthenticationPrincipal User loggedUser) {
+        return atividadeService.updateStatus(id, request, loggedUser);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(NO_CONTENT)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAuthority('ACTIVITY_UPDATE_ANY')")
     @Operation(summary = "Desativar atividade (professor)",
             security = {@SecurityRequirement(name = "bearerAuth")},
             responses = {@ApiResponse(responseCode = "204")})

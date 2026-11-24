@@ -39,12 +39,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-odonto}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-odonto}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-odonto}
-      SPRING_LIQUIBASE_CHANGE_LOG: classpath:/db/changelog/db.changelog-master.xml
+      SPRING_LIQUIBASE_CHANGE_LOG: classpath:/db/changelog/db.changelog-master.yaml
       JWT_SECRET: ${JWT_SECRET:-changeme-use-a-strong-secret-in-production}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    # A aplicação escuta na porta 8090 (server.port em application.yml).
     ports:
-      - "8080:8080"
+      - "8090:8090"
     networks:
       - odonto-net
 

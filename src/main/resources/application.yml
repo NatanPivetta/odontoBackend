@@ -5,9 +5,6 @@ spring:
   application:
     name: odonto
 
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
-
   # ── Banco de dados ────────────────────────────────────────
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/odonto}
@@ -38,6 +35,17 @@ cors:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
     enabled: true
 
+  # ── Mail ──────────────────────────────────────────────────
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+
   # ── Jackson ───────────────────────────────────────────────
   jackson:
     default-property-inclusion: non_null
@@ -46,6 +54,9 @@ cors:
     deserialization:
       fail-on-unknown-properties: false
     time-zone: America/Sao_Paulo
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 # ── Servidor ──────────────────────────────────────────────────
 server:
@@ -58,8 +69,11 @@ server:
     include-stacktrace: never
 
 # ── JWT ───────────────────────────────────────────────────────
+# O JWT_SECRET DEVE ser definido por variável de ambiente em qualquer ambiente real
+# (HS512 exige >= 64 bytes — gere com: openssl rand -base64 64).
+# O default abaixo é INSEGURO e serve apenas para rodar localmente sem configurar nada.
 jwt:
-  secret: ${JWT_SECRET:bzj8uj6rVyned4cHiTIh0MgVOOdcKnA3F8hfrti8yrCNMyJJqtoFF677draKF6+VAw1TEqNUsxMg9T166nyiKw==bzj8uj6rVyned4cHiTIh0MgVOOdcKnA3F8hfrti8yrCNMyJJqtoFF677draKF6+VAw1TEqNUsxMg9T166nyiKw==}
+  secret: ${JWT_SECRET:local-dev-insecure-jwt-secret-do-not-use-in-production-override-via-env-0000000000}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 # ── Actuator ──────────────────────────────────────────────────

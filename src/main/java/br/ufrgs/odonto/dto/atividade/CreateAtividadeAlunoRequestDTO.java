@@ -1,6 +1,7 @@
 package br.ufrgs.odonto.dto.atividade;
 
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -24,6 +25,12 @@ public record CreateAtividadeAlunoRequestDTO(
         String observacoes,
 
         StatusAtividade status,
+
+        @NotNull
+        TipoAtividade tipo,
+
+        @Size(max = 255)
+        String tipoDescricao,
 
         @NotNull
         Long professorOrientadorId,

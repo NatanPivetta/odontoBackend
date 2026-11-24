@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -64,15 +65,15 @@ class AtividadeServiceTest {
                 .active(true)
                 .build();
         responseDTO = new AtividadeResponseDTO(100L, LocalDate.now(), null, "ABC123",
-                null, null, null, StatusAtividade.PENDENTE,
-                null, null, null, null, null, null);
+                null, null, StatusAtividade.PENDENTE,
+                null, null, null, null, null, null, null, null);
     }
 
     @Test
     void create_deveSalvarAtividadeComTodosOsCampos() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 1L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, null);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
@@ -94,7 +95,7 @@ class AtividadeServiceTest {
     void create_deveLancarExcecaoQuandoAlunoNaoTemRoleAluno() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 2L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 2L, 2L, null, 10L, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
 
@@ -107,7 +108,7 @@ class AtividadeServiceTest {
     void create_deveLancarExcecaoQuandoAlunoNaoEncontrado() {
         CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 99L, 2L, null, 10L, null);
+                StatusAtividade.PENDENTE, null, null, 99L, 2L, null, 10L, null);
 
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -119,18 +120,18 @@ class AtividadeServiceTest {
     void createAsAluno_deveInferirTurmaDoAluno() {
         CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                StatusAtividade.PENDENTE, 2L, null, null);
+                StatusAtividade.PENDENTE, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
-        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
+        when(turmaRepository.findActiveTurmaForAluno(aluno))
                 .thenReturn(Optional.of(turma));
         when(atividadeRepository.save(any())).thenReturn(atividade);
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.createAsAluno(dto, aluno);
 
         assertThat(result).isNotNull();
-        verify(turmaRepository).findByActiveTrueAndAlunosContaining(aluno);
+        verify(turmaRepository).findActiveTurmaForAluno(aluno);
         verify(atividadeRepository).save(argThat(a -> a.getTurma().equals(turma)));
     }
 
@@ -138,10 +139,10 @@ class AtividadeServiceTest {
     void createAsAluno_deveLancarExcecaoQuandoSemTurmaAtiva() {
         CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
                 LocalDate.now(), null, "ABC123", null, null,
-                null, 2L, null, null);
+                null, null, null, 2L, null, null);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
-        when(turmaRepository.findByActiveTrueAndAlunosContaining(aluno))
+        when(turmaRepository.findActiveTurmaForAluno(aluno))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.createAsAluno(dto, aluno))
@@ -150,7 +151,7 @@ class AtividadeServiceTest {
     }
 
     @Test
-    void findById_professorRecebeRespostaComFeedback() {
+    void findById_professorRecebeResposta() {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
@@ -158,19 +159,17 @@ class AtividadeServiceTest {
 
         assertThat(result).isEqualTo(responseDTO);
         verify(atividadeMapper).toResponse(atividade);
-        verify(atividadeMapper, never()).toResponseSemFeedback(any());
     }
 
     @Test
-    void findById_alunoRecebeRespostaSemFeedback() {
+    void findById_alunoRecebeResposta() {
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         AtividadeResponseDTO result = atividadeService.findById(100L, aluno);
 
         assertThat(result).isEqualTo(responseDTO);
-        verify(atividadeMapper).toResponseSemFeedback(atividade);
-        verify(atividadeMapper, never()).toResponse(any());
+        verify(atividadeMapper).toResponse(atividade);
     }
 
     @Test
@@ -185,11 +184,11 @@ class AtividadeServiceTest {
     @Test
     void updateDadosBasicos_alunoAtualizaCamposPermitidos() {
         UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
-                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null);
+                LocalDate.now().plusDays(1), null, "XYZ999", "Paciente", null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
-        when(atividadeMapper.toResponseSemFeedback(atividade)).thenReturn(responseDTO);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
         atividadeService.updateDadosBasicos(100L, dto, aluno);
 
@@ -201,7 +200,7 @@ class AtividadeServiceTest {
     void updateDadosBasicos_alunoNaoPodeEditarAtividadeDeOutroAluno() {
         User outroAluno = User.builder().id(99L).role(Role.ALUNO).build();
         UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
-                null, null, "XYZ", null, null);
+                null, null, "XYZ", null, null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
 
@@ -217,7 +216,7 @@ class AtividadeServiceTest {
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        atividadeService.updateStatus(100L, dto);
+        atividadeService.updateStatus(100L, dto, professor);
 
         verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.CONCLUIDA));
     }
@@ -239,59 +238,149 @@ class AtividadeServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    // ── Regras de data ────────────────────────────────────────────
+
+    @Test
+    void create_dataFuturaForcaStatusPendente() {
+        LocalDate futuro = LocalDate.now().plusDays(5);
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                futuro, null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.create(dto);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.PENDENTE));
+    }
+
+    @Test
+    void create_dataHojeMantémStatusInformado() {
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.create(dto);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.CONCLUIDA));
+    }
+
+    @Test
+    void create_dataConclusaoFuturaLancaExcecao() {
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), LocalDate.now().plusDays(1), "ABC123", null, null,
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+
+        assertThatThrownBy(() -> atividadeService.create(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
+    @Test
+    void createAsAluno_dataFuturaForcaStatusPendente() {
+        LocalDate futuro = LocalDate.now().plusDays(3);
+        CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
+                futuro, null, "ABC123", null, null,
+                StatusAtividade.CONCLUIDA, null, null, 2L, null, null);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findActiveTurmaForAluno(aluno)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
+
+        atividadeService.createAsAluno(dto, aluno);
+
+        verify(atividadeRepository).save(argThat(a -> a.getStatus() == StatusAtividade.PENDENTE));
+    }
+
+    @Test
+    void updateDadosBasicos_dataConclusaoFuturaLancaExcecao() {
+        UpdateAtividadeAlunoRequestDTO dto = new UpdateAtividadeAlunoRequestDTO(
+                null, LocalDate.now().plusDays(1), null, null, null, null, null, null);
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.updateDadosBasicos(100L, dto, aluno))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
+    @Test
+    void update_dataConclusaoFuturaLancaExcecao() {
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
+                null, LocalDate.now().plusDays(1), null, null, null, null, null, null, null);
+
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+
+        assertThatThrownBy(() -> atividadeService.update(100L, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("data de conclusão");
+    }
+
     @Test
     void findAll_semFiltros_retornaPagina() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(atividadeRepository.findByActiveTrue(pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, null);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, null, null, null, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(atividadeRepository).findByActiveTrue(pageable);
+        verify(atividadeRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void findAll_comAlunoId_retornaAtividadesDoAluno() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(atividadeRepository.findByActiveTrueAndAlunoId(1L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, null);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, null, null, null, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(atividadeRepository).findByActiveTrueAndAlunoId(1L, pageable);
+        verify(atividadeRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void findAll_comTurmaId_retornaAtividadesDaTurma() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(atividadeRepository.findByActiveTrueAndTurmaId(10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, 10L);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, null, 10L, null, null, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(atividadeRepository).findByActiveTrueAndTurmaId(10L, pageable);
+        verify(atividadeRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void findAll_comAlunoEturma_retornaAtividadesFiltradas() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable)).thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(atividade)));
         when(atividadeMapper.toResponse(atividade)).thenReturn(responseDTO);
 
-        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, 10L);
+        Page<AtividadeResponseDTO> result = atividadeService.findAll(pageable, 1L, 10L, null, null, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(atividadeRepository).findByActiveTrueAndAlunoIdAndTurmaId(1L, 10L, pageable);
+        verify(atividadeRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
-    void update_professorAtualizaCamposEFeedback() {
+    void update_professorAtualizaCampos() {
         UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(
-                LocalDate.now().plusDays(1), null, "NEW123", null, null,
-                "feedback reservado", null, null);
+                LocalDate.now().plusDays(1), null, "NEW123", null, null, null, null, null, null);
 
         when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
         when(atividadeRepository.save(atividade)).thenReturn(atividade);
@@ -299,17 +388,46 @@ class AtividadeServiceTest {
 
         atividadeService.update(100L, dto);
 
-        verify(atividadeRepository).save(argThat(a ->
-                a.getProntuario().equals("NEW123") &&
-                "feedback reservado".equals(a.getFeedbackPrivado())));
+        verify(atividadeRepository).save(argThat(a -> a.getProntuario().equals("NEW123")));
     }
 
     @Test
     void update_atividadeNaoEncontradaLancaExcecao() {
-        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null, null);
+        UpdateAtividadeRequestDTO dto = new UpdateAtividadeRequestDTO(null, null, null, null, null, null, null, null, null);
         when(atividadeRepository.findByIdAndActiveTrue(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> atividadeService.update(999L, dto))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void createFilha_deveHerdarPacienteDaAtividadePai() {
+        atividade.setNomePaciente("Paciente original");
+        CreateAtividadeRequestDTO dto = new CreateAtividadeRequestDTO(
+                LocalDate.now(), null, "ABC123", "Paciente diferente", null,
+                StatusAtividade.PENDENTE, null, null, 1L, 2L, null, 10L, 100L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluno));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findById(10L)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        atividadeService.create(dto);
+        verify(atividadeRepository).save(argThat(a ->
+                "Paciente original".equals(a.getNomePaciente()) && a.getAtividadePai() == atividade));
+    }
+
+    @Test
+    void createFilhaAsAluno_deveHerdarPacienteDaAtividadePai() {
+        atividade.setNomePaciente("Paciente original");
+        CreateAtividadeAlunoRequestDTO dto = new CreateAtividadeAlunoRequestDTO(
+                LocalDate.now(), null, "ABC123", "Paciente diferente", null,
+                StatusAtividade.PENDENTE, null, null, 2L, null, 100L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(professor));
+        when(turmaRepository.findActiveTurmaForAluno(aluno)).thenReturn(Optional.of(turma));
+        when(atividadeRepository.findByIdAndActiveTrue(100L)).thenReturn(Optional.of(atividade));
+        when(atividadeRepository.save(any())).thenReturn(atividade);
+        atividadeService.createAsAluno(dto, aluno);
+        verify(atividadeRepository).save(argThat(a ->
+                "Paciente original".equals(a.getNomePaciente()) && a.getAtividadePai() == atividade));
     }
 }

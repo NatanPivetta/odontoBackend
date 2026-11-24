@@ -36,13 +36,17 @@ public class Atividade extends Auditable<String> {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
-    @Column(name = "feedback_privado", columnDefinition = "TEXT")
-    private String feedbackPrivado;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private StatusAtividade status = StatusAtividade.PENDENTE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private TipoAtividade tipo;
+
+    @Column(name = "tipo_descricao", length = 255)
+    private String tipoDescricao;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "aluno_id", nullable = false)

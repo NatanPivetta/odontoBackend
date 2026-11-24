@@ -1,5 +1,6 @@
 package br.ufrgs.odonto.modules.core.service;
 
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,11 +13,13 @@ import org.springframework.stereotype.Service;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final CardNumberNormalizer cardNumberNormalizer;
 
     @Override
     public UserDetails loadUserByUsername(String cardNumber) throws UsernameNotFoundException {
-        return userRepository.findByCardNumber(cardNumber)
+        String normalizedCardNumber = cardNumberNormalizer.normalize(cardNumber);
+        return userRepository.findByCardNumber(normalizedCardNumber)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "Usuário não encontrado para o cartão: " + cardNumber));
+                        ErrorCode.ERROR_AUTH_INVALID_CREDENTIALS.name()));
     }
 }

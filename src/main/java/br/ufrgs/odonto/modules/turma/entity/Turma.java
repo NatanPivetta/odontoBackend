@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "turmas")
@@ -21,8 +22,12 @@ public class Turma extends Auditable<String> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 20)
-    private String disciplina;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 40)
+    private DisciplinaClinica disciplina;
+
+    @Column(name = "codigo_turma", nullable = false, length = 30)
+    private String codigoTurma;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -34,12 +39,14 @@ public class Turma extends Auditable<String> {
     @Builder.Default
     private boolean active = true;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "turma_alunos",
-            joinColumns = @JoinColumn(name = "turma_id"),
-            inverseJoinColumns = @JoinColumn(name = "aluno_id")
-    )
+    @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
-    private Set<User> alunos = new HashSet<>();
+    private Set<TurmaAluno> matriculas = new HashSet<>();
+
+    public Set<User> getAlunosAtivos() {
+        return matriculas.stream()
+                .filter(TurmaAluno::isActive)
+                .map(TurmaAluno::getAluno)
+                .collect(Collectors.toSet());
+    }
 }

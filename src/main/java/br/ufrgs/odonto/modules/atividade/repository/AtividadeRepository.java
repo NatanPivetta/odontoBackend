@@ -4,11 +4,12 @@ import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
+public interface AtividadeRepository extends JpaRepository<Atividade, Long>, JpaSpecificationExecutor<Atividade> {
 
     Optional<Atividade> findByIdAndActiveTrue(Long id);
 
@@ -21,4 +22,6 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
     Page<Atividade> findByActiveTrueAndAlunoIdAndTurmaId(Long alunoId, Long turmaId, Pageable pageable);
 
     List<Atividade> findByActiveTrueAndAtividadePaiId(Long atividadePaiId);
+
+    Page<Atividade> findByActiveTrueAndAtividadePaiId(Long atividadePaiId, Pageable pageable);
 }

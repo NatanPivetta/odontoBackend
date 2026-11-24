@@ -3,16 +3,21 @@ package br.ufrgs.odonto.modules.atividade.service;
 import br.ufrgs.odonto.dto.atividade.*;
 import br.ufrgs.odonto.enums.Role;
 import br.ufrgs.odonto.exception.BusinessException;
+import br.ufrgs.odonto.exception.ErrorCode;
 import br.ufrgs.odonto.exception.ResourceNotFoundException;
 import br.ufrgs.odonto.modules.atividade.entity.Atividade;
 import br.ufrgs.odonto.modules.atividade.entity.StatusAtividade;
+import br.ufrgs.odonto.modules.atividade.entity.TipoAtividade;
 import br.ufrgs.odonto.modules.atividade.mapper.AtividadeMapper;
 import br.ufrgs.odonto.modules.atividade.repository.AtividadeRepository;
+import br.ufrgs.odonto.modules.atividade.repository.AtividadeSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import br.ufrgs.odonto.modules.core.entity.User;
 import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import br.ufrgs.odonto.modules.turma.entity.Turma;
 import br.ufrgs.odonto.modules.turma.repository.TurmaRepository;
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,8 +37,10 @@ public class AtividadeService {
     public AtividadeResponseDTO create(CreateAtividadeRequestDTO dto) {
         User aluno = findUserById(dto.alunoId());
         if (aluno.getRole() != Role.ALUNO) {
-            throw new BusinessException("O usuário informado não possui o perfil de aluno");
+            throw new BusinessException(ErrorCode.ERROR_USER_NOT_STUDENT);
         }
+        validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+        validarDataConclusao(dto.dataConclusao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
         Turma turma = findTurmaById(dto.turmaId());
@@ -43,9 +50,11 @@ public class AtividadeService {
                 .data(dto.data())
                 .dataConclusao(dto.dataConclusao())
                 .prontuario(dto.prontuario())
-                .nomePaciente(dto.nomePaciente())
+                .nomePaciente(atividadePai != null ? atividadePai.getNomePaciente() : dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(dto.status())
+                .status(resolverStatus(dto.data(), dto.status(), dto.dataConclusao()))
+                .tipo(dto.tipo())
+                .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(aluno)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)
@@ -58,19 +67,23 @@ public class AtividadeService {
 
     @Transactional
     public AtividadeResponseDTO createAsAluno(CreateAtividadeAlunoRequestDTO dto, User loggedUser) {
+        validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+        validarDataConclusao(dto.dataConclusao());
         User professorOrientador = findUserById(dto.professorOrientadorId());
         User professorTutor = dto.professorTutorId() != null ? findUserById(dto.professorTutorId()) : null;
-        Turma turma = turmaRepository.findByActiveTrueAndAlunosContaining(loggedUser)
-                .orElseThrow(() -> new BusinessException("Aluno não possui turma ativa no semestre atual"));
+        Turma turma = turmaRepository.findActiveTurmaForAluno(loggedUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ERROR_STUDENT_WITHOUT_ACTIVE_TURMA));
         Atividade atividadePai = dto.atividadePaiId() != null ? findAtividadeById(dto.atividadePaiId()) : null;
 
         Atividade atividade = Atividade.builder()
                 .data(dto.data())
                 .dataConclusao(dto.dataConclusao())
                 .prontuario(dto.prontuario())
-                .nomePaciente(dto.nomePaciente())
+                .nomePaciente(atividadePai != null ? atividadePai.getNomePaciente() : dto.nomePaciente())
                 .observacoes(dto.observacoes())
-                .status(Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE))
+                .status(resolverStatus(dto.data(), Objects.requireNonNullElse(dto.status(), StatusAtividade.PENDENTE), dto.dataConclusao()))
+                .tipo(dto.tipo())
+                .tipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null)
                 .aluno(loggedUser)
                 .professorOrientador(professorOrientador)
                 .professorTutor(professorTutor)
@@ -78,38 +91,39 @@ public class AtividadeService {
                 .atividadePai(atividadePai)
                 .build();
 
-        return atividadeMapper.toResponseSemFeedback(atividadeRepository.save(atividade));
+        return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId) {
-        Page<Atividade> page;
-        if (alunoId != null && turmaId != null) {
-            page = atividadeRepository.findByActiveTrueAndAlunoIdAndTurmaId(alunoId, turmaId, pageable);
-        } else if (alunoId != null) {
-            page = atividadeRepository.findByActiveTrueAndAlunoId(alunoId, pageable);
-        } else if (turmaId != null) {
-            page = atividadeRepository.findByActiveTrueAndTurmaId(turmaId, pageable);
-        } else {
-            page = atividadeRepository.findByActiveTrue(pageable);
-        }
-        return page.map(atividadeMapper::toResponse);
+    public Page<AtividadeResponseDTO> findAll(Pageable pageable, Long alunoId, Long turmaId,
+                                              Long atividadePaiId, Long professorOrientadorId,
+                                              Long professorTutorId, TipoAtividade tipo,
+                                              StatusAtividade status) {
+        Specification<Atividade> spec = Specification.where(AtividadeSpecification.isActive());
+        if (alunoId != null)                spec = spec.and(AtividadeSpecification.byAlunoId(alunoId));
+        if (turmaId != null)                spec = spec.and(AtividadeSpecification.byTurmaId(turmaId));
+        if (atividadePaiId != null)         spec = spec.and(AtividadeSpecification.byAtividadePaiId(atividadePaiId));
+        if (professorOrientadorId != null)  spec = spec.and(AtividadeSpecification.byProfessorOrientadorId(professorOrientadorId));
+        if (professorTutorId != null)       spec = spec.and(AtividadeSpecification.byProfessorTutorId(professorTutorId));
+        if (tipo != null)                   spec = spec.and(AtividadeSpecification.byTipo(tipo));
+        if (status != null)                 spec = spec.and(AtividadeSpecification.byStatus(status));
+        return atividadeRepository.findAll(spec, pageable).map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser) {
-        return atividadeRepository.findByActiveTrueAndAlunoId(loggedUser.getId(), pageable)
-                .map(atividadeMapper::toResponseSemFeedback);
+    public Page<AtividadeResponseDTO> findMinhas(Pageable pageable, User loggedUser, TipoAtividade tipo, StatusAtividade status) {
+        Specification<Atividade> spec = Specification.where(AtividadeSpecification.isActive())
+                .and(AtividadeSpecification.byAlunoId(loggedUser.getId()));
+        if (tipo != null) spec = spec.and(AtividadeSpecification.byTipo(tipo));
+        if (status != null) spec = spec.and(AtividadeSpecification.byStatus(status));
+        return atividadeRepository.findAll(spec, pageable).map(atividadeMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public AtividadeResponseDTO findById(Long id, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
-        if (loggedUser.getRole() == Role.ALUNO) {
-            if (!atividade.getAluno().getId().equals(loggedUser.getId())) {
-                throw new ResourceNotFoundException("Atividade não encontrada: " + id);
-            }
-            return atividadeMapper.toResponseSemFeedback(atividade);
+        if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
         }
         return atividadeMapper.toResponse(atividade);
     }
@@ -118,12 +132,17 @@ public class AtividadeService {
     public AtividadeResponseDTO update(Long id, UpdateAtividadeRequestDTO dto) {
         Atividade atividade = findAtividadeById(id);
 
+        if (dto.dataConclusao() != null)   validarDataConclusao(dto.dataConclusao());
         if (dto.data() != null)            atividade.setData(dto.data());
         if (dto.dataConclusao() != null)   atividade.setDataConclusao(dto.dataConclusao());
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
-        if (dto.feedbackPrivado() != null) atividade.setFeedbackPrivado(dto.feedbackPrivado());
+        if (dto.tipo() != null) {
+            validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+            atividade.setTipo(dto.tipo());
+            atividade.setTipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null);
+        }
         if (dto.professorOrientadorId() != null) {
             atividade.setProfessorOrientador(findUserById(dto.professorOrientadorId()));
         }
@@ -139,21 +158,44 @@ public class AtividadeService {
         Atividade atividade = findAtividadeById(id);
 
         if (!atividade.getAluno().getId().equals(loggedUser.getId())) {
-            throw new ResourceNotFoundException("Atividade não encontrada: " + id);
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
         }
 
+        if (dto.dataConclusao() != null)   validarDataConclusao(dto.dataConclusao());
         if (dto.data() != null)            atividade.setData(dto.data());
         if (dto.dataConclusao() != null)   atividade.setDataConclusao(dto.dataConclusao());
         if (dto.prontuario() != null)      atividade.setProntuario(dto.prontuario());
         if (dto.nomePaciente() != null)    atividade.setNomePaciente(dto.nomePaciente());
         if (dto.observacoes() != null)     atividade.setObservacoes(dto.observacoes());
+        if (dto.tipo() != null) {
+            validarTipoDescricao(dto.tipo(), dto.tipoDescricao());
+            atividade.setTipo(dto.tipo());
+            atividade.setTipoDescricao(dto.tipo() == TipoAtividade.OUTROS ? dto.tipoDescricao() : null);
+        }
+        if (dto.professorTutorId() != null) {
+            atividade.setProfessorTutor(findUserById(dto.professorTutorId()));
+        }
 
-        return atividadeMapper.toResponseSemFeedback(atividadeRepository.save(atividade));
+        return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
 
     @Transactional
-    public AtividadeResponseDTO updateStatus(Long id, UpdateStatusAtividadeRequestDTO dto) {
+    public AtividadeResponseDTO updateStatus(Long id, UpdateStatusAtividadeRequestDTO dto, User loggedUser) {
         Atividade atividade = findAtividadeById(id);
+        if (loggedUser.getRole() == Role.ALUNO && !atividade.getAluno().getId().equals(loggedUser.getId())) {
+            throw new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id);
+        }
+        if (atividade.getStatus() == StatusAtividade.ALTA && dto.status() != StatusAtividade.ALTA) {
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_IMMUTABLE);
+        }
+        if (dto.status() == StatusAtividade.ALTA) {
+            if (loggedUser.getRole() != Role.PROFESSOR) {
+                throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_PROFESSOR_ONLY);
+            }
+            if (atividade.getStatus() != StatusAtividade.CONCLUIDA) {
+                throw new BusinessException(ErrorCode.ERROR_ACTIVITY_ALTA_REQUIRES_CONCLUIDA);
+            }
+        }
         atividade.setStatus(dto.status());
         return atividadeMapper.toResponse(atividadeRepository.save(atividade));
     }
@@ -165,18 +207,49 @@ public class AtividadeService {
         atividadeRepository.save(atividade);
     }
 
+    private void validarTipoDescricao(TipoAtividade tipo, String tipoDescricao) {
+        if (tipo == TipoAtividade.OUTROS && (tipoDescricao == null || tipoDescricao.isBlank())) {
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_TYPE_DESCRIPTION_REQUIRED);
+        }
+    }
+
+    private void validarDataConclusao(LocalDate dataConclusao) {
+        if (dataConclusao != null && dataConclusao.isAfter(LocalDate.now())) {
+            throw new BusinessException(ErrorCode.ERROR_ACTIVITY_COMPLETION_DATE_FUTURE);
+        }
+    }
+
+    private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado) {
+        if (data != null && data.isAfter(LocalDate.now())) {
+            return StatusAtividade.PENDENTE;
+        }
+        return statusSolicitado;
+    }
+
+    private StatusAtividade resolverStatus(LocalDate data, StatusAtividade statusSolicitado, LocalDate dataConclusao) {
+        if (data != null && data.isAfter(LocalDate.now())) {
+            return StatusAtividade.PENDENTE;
+        }
+        if (dataConclusao != null
+                && statusSolicitado != StatusAtividade.ALTA
+                && statusSolicitado != StatusAtividade.CONCLUIDA) {
+            return StatusAtividade.CONCLUIDA;
+        }
+        return statusSolicitado;
+    }
+
     private Atividade findAtividadeById(Long id) {
         return atividadeRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_ACTIVITY_NOT_FOUND, id));
     }
 
     private User findUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_USER_NOT_FOUND, id));
     }
 
     private Turma findTurmaById(Long id) {
         return turmaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Turma não encontrada: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ERROR_TURMA_NOT_FOUND, id));
     }
 }

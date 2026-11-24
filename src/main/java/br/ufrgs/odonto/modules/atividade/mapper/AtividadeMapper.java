@@ -12,8 +12,4 @@ public interface AtividadeMapper {
 
     @Mapping(target = "atividadePaiId", source = "atividadePai.id")
     AtividadeResponseDTO toResponse(Atividade atividade);
-
-    @Mapping(target = "atividadePaiId", source = "atividadePai.id")
-    @Mapping(target = "feedbackPrivado", ignore = true)
-    AtividadeResponseDTO toResponseSemFeedback(Atividade atividade);
 }
