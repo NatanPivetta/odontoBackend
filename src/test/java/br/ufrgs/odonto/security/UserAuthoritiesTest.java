@@ -19,10 +19,10 @@ class UserAuthoritiesTest {
     @Test
     void getAuthoritiesIncluiRoleLegadaRolePersistidaEPermissions() {
         SecurityPermission classView = SecurityPermission.builder()
-                .name(PermissionName.CLASS_VIEW)
+                .id(1L).name(PermissionName.CLASS_VIEW)
                 .build();
         SecurityPermission activityCreate = SecurityPermission.builder()
-                .name(PermissionName.ACTIVITY_CREATE)
+                .id(2L).name(PermissionName.ACTIVITY_CREATE)
                 .build();
         SecurityRole alunoRole = SecurityRole.builder()
                 .name(RoleName.ALUNO)

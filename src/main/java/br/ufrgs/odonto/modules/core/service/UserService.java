@@ -1,5 +1,7 @@
 package br.ufrgs.odonto.modules.core.service;
 
+import br.ufrgs.odonto.enums.RoleName;
+import br.ufrgs.odonto.modules.core.repository.SecurityRoleRepository;
 import br.ufrgs.odonto.dto.user.CreateUserRequestDTO;
 import br.ufrgs.odonto.dto.user.UpdateUserRequestDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SecurityRoleRepository securityRoleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CardNumberNormalizer cardNumberNormalizer;
@@ -51,6 +54,8 @@ public class UserService {
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(request.role())
                 .build();
+        user.getRoles().add(securityRoleRepository.findByName(RoleName.valueOf(request.role().name()))
+                .orElseThrow(() -> new IllegalStateException("Security role not configured: " + request.role())));
 
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -69,6 +74,12 @@ public class UserService {
             user.setName(request.name());
         }
         if (request.role() != null) {
+            var securityRole = securityRoleRepository.findByName(RoleName.valueOf(request.role().name()))
+                    .orElseThrow(() -> new IllegalStateException("Security role not configured: " + request.role()));
+            // Replace legacy base roles while preserving additional RBAC profiles.
+            user.getRoles().removeIf(role -> role.getName() == RoleName.ALUNO
+                    || role.getName() == RoleName.PROFESSOR);
+            user.getRoles().add(securityRole);
             user.setRole(request.role());
         }
         if (request.active() != null) {
