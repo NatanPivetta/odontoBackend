@@ -1,0 +1,34 @@
+<testsuites id="" name="" tests="11" failures="0" skipped="0" errors="0" time="62.87285200000001">
+<testsuite name="atividades.spec.ts" timestamp="2026-11-27T14:21:27.230Z" hostname="chromium" tests="3" failures="0" skipped="0" time="21.561" errors="0">
+<testcase name="S03 aluno registra e edita atividade com validação de turma, descrição e data" classname="atividades.spec.ts" time="10.152">
+</testcase>
+<testcase name="S04 professor conclui e registra alta; aluno não tem a ação de alta" classname="atividades.spec.ts" time="7.3">
+</testcase>
+<testcase name="S06 filtra atividades, abre o detalhe e trata resultado vazio e ID ausente" classname="atividades.spec.ts" time="4.109">
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2026-11-27T14:21:27.230Z" hostname="chromium" tests="4" failures="0" skipped="0" time="8.437" errors="0">
+<testcase name="S01 redireciona para login ao abrir atividades sem sessão" classname="auth.spec.ts" time="2.065">
+</testcase>
+<testcase name="S01 exibe erro para senha incorreta" classname="auth.spec.ts" time="1.32">
+</testcase>
+<testcase name="S01 PROFESSOR entra e encerra a sessão" classname="auth.spec.ts" time="2.542">
+</testcase>
+<testcase name="S01 ALUNO entra e encerra a sessão" classname="auth.spec.ts" time="2.51">
+</testcase>
+</testsuite>
+<testsuite name="feedback.spec.ts" timestamp="2026-11-27T14:21:27.230Z" hostname="chromium" tests="1" failures="0" skipped="0" time="7.781" errors="0">
+<testcase name="S05 professor publica feedback visível apenas ao titular" classname="feedback.spec.ts" time="7.781">
+</testcase>
+</testsuite>
+<testsuite name="primeiro-acesso.spec.ts" timestamp="2026-11-27T14:21:27.230Z" hostname="chromium" tests="2" failures="0" skipped="0" time="5.874" errors="0">
+<testcase name="S07 rejeita o código incorreto, aceita o código do Mailpit e permite login" classname="primeiro-acesso.spec.ts" time="3.782">
+</testcase>
+<testcase name="S07 recusa código expirado e a conta continua sem acesso" classname="primeiro-acesso.spec.ts" time="2.092">
+</testcase>
+</testsuite>
+<testsuite name="turmas.spec.ts" timestamp="2026-11-27T14:21:27.230Z" hostname="chromium" tests="1" failures="0" skipped="0" time="5.718" errors="0">
+<testcase name="S02 professor cria turma, matricula, remove e rematricula aluno" classname="turmas.spec.ts" time="5.718">
+</testcase>
+</testsuite>
+</testsuites>

@@ -9,6 +9,7 @@ import org.slf4j.MDC;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -86,6 +87,13 @@ public class GlobalExceptionHandler {
                         traceId(),
                         fields
                 ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(HttpServletRequest request, Locale locale) {
+        var status = HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status)
+                .body(buildResponse(status, ErrorCode.ERROR_VALIDATION, new Object[0], request, locale));
     }
 
     @ExceptionHandler(Exception.class)

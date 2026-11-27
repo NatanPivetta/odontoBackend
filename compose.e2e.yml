@@ -1,0 +1,47 @@
+name: odonto-vvs-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: odonto_e2e
+      POSTGRES_USER: odonto_e2e
+      POSTGRES_PASSWORD: odonto-e2e-db
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "odonto_e2e", "-d", "odonto_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.24.1
+    ports:
+      - "127.0.0.1:8125:8025"
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/odonto_e2e
+      SPRING_DATASOURCE_USERNAME: odonto_e2e
+      SPRING_DATASOURCE_PASSWORD: odonto-e2e-db
+      JWT_SECRET: odonto-e2e-only-jwt-secret-for-local-tests-0123456789-abcdefghijklmnop
+      CORS_ALLOWED_ORIGINS: http://localhost:3100
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      MAIL_USERNAME: clinodonto@example.invalid
+      MAIL_PASSWORD: ""
+      SPRING_APPLICATION_JSON: '{"spring":{"mail":{"properties":{"mail.smtp.auth":"false","mail.smtp.starttls.enable":"false","mail.smtp.starttls.required":"false"}}}}'
+    ports:
+      - "127.0.0.1:8190:8090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8090/api/actuator/health"]
+      interval: 3s
+      timeout: 5s
+      retries: 40

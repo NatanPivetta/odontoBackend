@@ -1,0 +1,30 @@
+﻿Test set: br.ufrgs.odonto.AdministrativeResourceHttpTest
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.51 s -- in br.ufrgs.odonto.AdministrativeResourceHttpTest
+Test set: br.ufrgs.odonto.config.auth.JwtServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.348 s -- in br.ufrgs.odonto.config.auth.JwtServiceTest
+Test set: br.ufrgs.odonto.modules.atividade.service.AtividadeServiceTest
+Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.657 s -- in br.ufrgs.odonto.modules.atividade.service.AtividadeServiceTest
+Test set: br.ufrgs.odonto.modules.atividade.service.FeedbackServiceTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.457 s -- in br.ufrgs.odonto.modules.atividade.service.FeedbackServiceTest
+Test set: br.ufrgs.odonto.modules.core.service.AlunoServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.483 s -- in br.ufrgs.odonto.modules.core.service.AlunoServiceTest
+Test set: br.ufrgs.odonto.modules.core.service.AuthServiceTest
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.962 s -- in br.ufrgs.odonto.modules.core.service.AuthServiceTest
+Test set: br.ufrgs.odonto.modules.core.service.CardNumberNormalizerTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.227 s -- in br.ufrgs.odonto.modules.core.service.CardNumberNormalizerTest
+Test set: br.ufrgs.odonto.modules.core.service.EmailServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.649 s -- in br.ufrgs.odonto.modules.core.service.EmailServiceTest
+Test set: br.ufrgs.odonto.modules.core.service.ProfessorServiceTest
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.073 s -- in br.ufrgs.odonto.modules.core.service.ProfessorServiceTest
+Test set: br.ufrgs.odonto.modules.core.service.UserServiceRolesTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.297 s -- in br.ufrgs.odonto.modules.core.service.UserServiceRolesTest
+Test set: br.ufrgs.odonto.modules.core.service.UserServiceTest
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.051 s -- in br.ufrgs.odonto.modules.core.service.UserServiceTest
+Test set: br.ufrgs.odonto.modules.turma.service.TurmaServiceTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.280 s -- in br.ufrgs.odonto.modules.turma.service.TurmaServiceTest
+Test set: br.ufrgs.odonto.ResourceHttpTest
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.799 s -- in br.ufrgs.odonto.ResourceHttpTest
+Test set: br.ufrgs.odonto.security.ResourceAuthorizationAnnotationsTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.118 s -- in br.ufrgs.odonto.security.ResourceAuthorizationAnnotationsTest
+Test set: br.ufrgs.odonto.security.UserAuthoritiesTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in br.ufrgs.odonto.security.UserAuthoritiesTest

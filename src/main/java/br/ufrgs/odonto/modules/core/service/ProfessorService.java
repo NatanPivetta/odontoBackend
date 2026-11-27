@@ -1,6 +1,7 @@
 package br.ufrgs.odonto.modules.core.service;
 
 import br.ufrgs.odonto.dto.user.CreateProfessorRequestDTO;
+import br.ufrgs.odonto.dto.user.OrientadorDTO;
 import br.ufrgs.odonto.dto.user.UpdateProfessorRequestDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
 import br.ufrgs.odonto.enums.Role;
@@ -13,9 +14,12 @@ import br.ufrgs.odonto.modules.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,13 @@ public class ProfessorService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CardNumberNormalizer cardNumberNormalizer;
+
+    @Transactional(readOnly = true)
+    public List<OrientadorDTO> listOrientadores() {
+        return userRepository.findByRoleAndActive(Role.PROFESSOR, true, Pageable.unpaged(Sort.by("name", "id")))
+                .map(professor -> new OrientadorDTO(professor.getId(), professor.getName()))
+                .getContent();
+    }
 
     @Transactional(readOnly = true)
     public Page<UserResponseDTO> findAll(Boolean active, Pageable pageable) {

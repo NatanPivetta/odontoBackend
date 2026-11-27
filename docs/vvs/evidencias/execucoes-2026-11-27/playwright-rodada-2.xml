@@ -1,0 +1,89 @@
+<testsuites id="" name="" tests="11" failures="0" skipped="0" errors="0" time="50.019178">
+<testsuite name="atividades.spec.ts" timestamp="2026-11-27T14:23:20.859Z" hostname="chromium-video" tests="3" failures="0" skipped="0" time="16.131" errors="0">
+<testcase name="S03 aluno registra e edita atividade com validação de turma, descrição e data" classname="atividades.spec.ts" time="7.07">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|atividades-S03-aluno-regis-7edf8-o-de-turma-descrição-e-data-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S04 professor conclui e registra alta; aluno não tem a ação de alta" classname="atividades.spec.ts" time="6">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|atividades-S04-professor-c-1c3e0-luno-não-tem-a-ação-de-alta-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S06 filtra atividades, abre o detalhe e trata resultado vazio e ID ausente" classname="atividades.spec.ts" time="3.061">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|atividades-S06-filtra-ativ-cade9-esultado-vazio-e-ID-ausente-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2026-11-27T14:23:20.859Z" hostname="chromium-video" tests="4" failures="0" skipped="0" time="6.55" errors="0">
+<testcase name="S01 redireciona para login ao abrir atividades sem sessão" classname="auth.spec.ts" time="0.882">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-S01-redireciona-para--cd8f6-abrir-atividades-sem-sessão-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S01 exibe erro para senha incorreta" classname="auth.spec.ts" time="1.147">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-S01-exibe-erro-para-senha-incorreta-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S01 PROFESSOR entra e encerra a sessão" classname="auth.spec.ts" time="2.236">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-S01-PROFESSOR-entra-e-encerra-a-sessão-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S01 ALUNO entra e encerra a sessão" classname="auth.spec.ts" time="2.285">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-S01-ALUNO-entra-e-encerra-a-sessão-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="feedback.spec.ts" timestamp="2026-11-27T14:23:20.859Z" hostname="chromium-video" tests="1" failures="0" skipped="0" time="7.642" errors="0">
+<testcase name="S05 professor publica feedback visível apenas ao titular" classname="feedback.spec.ts" time="7.642">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|feedback-S05-professor-pub-7dbbb-k-visível-apenas-ao-titular-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="primeiro-acesso.spec.ts" timestamp="2026-11-27T14:23:20.859Z" hostname="chromium-video" tests="2" failures="0" skipped="0" time="5.934" errors="0">
+<testcase name="S07 rejeita o código incorreto, aceita o código do Mailpit e permite login" classname="primeiro-acesso.spec.ts" time="3.999">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|primeiro-acesso-S07-rejeit-9c6a7--do-Mailpit-e-permite-login-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="S07 recusa código expirado e a conta continua sem acesso" classname="primeiro-acesso.spec.ts" time="1.935">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|primeiro-acesso-S07-recusa-14a99-a-conta-continua-sem-acesso-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="turmas.spec.ts" timestamp="2026-11-27T14:23:20.859Z" hostname="chromium-video" tests="1" failures="0" skipped="0" time="5.752" errors="0">
+<testcase name="S02 professor cria turma, matricula, remove e rematricula aluno" classname="turmas.spec.ts" time="5.752">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|turmas-S02-professor-cria--62799--remove-e-rematricula-aluno-chromium-video\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

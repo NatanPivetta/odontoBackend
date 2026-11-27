@@ -1,6 +1,7 @@
 package br.ufrgs.odonto.modules.core.resource.v1;
 
 import br.ufrgs.odonto.dto.user.CreateProfessorRequestDTO;
+import br.ufrgs.odonto.dto.user.OrientadorDTO;
 import br.ufrgs.odonto.dto.user.UpdateProfessorRequestDTO;
 import br.ufrgs.odonto.dto.user.UserResponseDTO;
 import br.ufrgs.odonto.modules.core.service.ProfessorService;
@@ -17,6 +18,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -55,6 +58,12 @@ public class ProfessorResource {
             @RequestParam(defaultValue = "name") String sort,
             @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
         return professorService.findAll(active, PageRequest.of(page, size, Sort.by(direction, sort)));
+    }
+
+    @GetMapping("/orientadores")
+    @PreAuthorize("hasAnyAuthority('ACTIVITY_CREATE', 'ACTIVITY_UPDATE_OWN')")
+    public List<OrientadorDTO> listOrientadores() {
+        return professorService.listOrientadores();
     }
 
     @GetMapping("/{id}")
